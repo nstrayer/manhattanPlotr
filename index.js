@@ -8,6 +8,22 @@ const margin = ({top: 20, right: 60, bottom: 30, left: 40});
 const tooltip_offset = 15;
 const {significance_thresh} = options;
 
+const tooltip_style = {
+  background:'white',
+  borderRadius: '10px',
+  padding: '0px 15px',
+  boxShadow: '1px 1px 3px black',
+  position:'fixed',
+  top: d => `${d.y}px`,
+  left:d => `${d.x}px`,
+};
+
+const delete_button_style = {
+  borderRadius: '5px',
+  display: 'none',
+};
+
+
 let tooltips = [];
 // Holds the indices of rows that need tooltips drawn. 
 //const tooltip_indices = [100];
@@ -48,15 +64,11 @@ const codes = svg.selectAll('.code_bubble')
     fill: (d,i) => d.color
   })
   .on('click', (d,i) => {
-    console.log(`Clicked the code ${d.code}, at index ${i}`);
-    // Push tooltip into list of tooltipped codes
-    
-    
+ 
     d.y = d3.event.clientY + tooltip_offset;
     d.x = d3.event.clientX + tooltip_offset;
     
     tooltips.push(d);
-    
     drawTooltips(tooltips);
   });
   
@@ -83,7 +95,6 @@ significance_line.selectAppend('text')
 
 
 function htmlFromProps(code){
-
   return Object.keys(code).reduce(
    (accum, curr, i) => accum + `<strong>${curr}:</strong> ${code[curr]} </br>`,
    ''
@@ -97,39 +108,44 @@ function drawTooltips(tooltips){
     
   const drawn_tips = tooltip_divs.enter()
     .append('div.tooltip')
-    .st({
-      background:'white',
-      borderRadius: '10px',
-      padding: '0px 15px',
-      boxShadow: '1px 1px 3px black',
-      position:'fixed',
-      top: d => `${d.y}px`,
-      left:d => `${d.x}px`,
-    })
+    .st(tooltip_style)
     .html(htmlFromProps)
     .on('mouseover', function(){
       d3.select(this).select('button').style('display', 'block');
+      d3.select(this).select('span').style('display', 'block');
     })
     .on('mouseout', function(){
       d3.select(this).select('button').style('display', 'none');
+      d3.select(this).select('span').style('display', 'none');
     });
     
    drawn_tips
     .append('button')
     .text('Remove')
-    .st({
-      borderRadius: '5px',
-      display: 'none',
-    })
+    .st(delete_button_style)
     .on('click', function(current){
-      //tooltips = tooltips.filter(d => d.code !== current.code);
-      const whereToSplice = tooltips.reduce((place, d, i) => d.code === current.code ? i : place, -1);
-      tooltips.splice(whereToSplice, 1);
+      const toDeleteIndex = tooltips.reduce((place, d, i) => d.code === current.code ? i : place, -1);
+      tooltips.splice(toDeleteIndex, 1);
       drawTooltips(tooltips);
+    });
+    
+   drawn_tips
+    .append('span')
+    .html(`<img src = 'http://chittagongit.com//images/drag-icon/drag-icon-2.jpg' width = 20px, height = 20px/>`)
+    .style('display', 'none')
+    .on('drag',function(d){
+      const {clientX, clientY} = d3.event;
+      d.x = clientX + tooltip_offset;
+      d.y = clientY + tooltip_offset;
+      
+      d3.select(this).parent().st({  
+        top: `${d.y}px`,
+        left:`${d.x}px`,
+      });
+      //drawTooltips(tooltips);
     });
   
   tooltip_divs.exit().remove(); 
-  
 }
 
 //debugger;
