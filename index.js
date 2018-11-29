@@ -5,7 +5,8 @@
 
 const svg = div.selectAppend('svg').at({width,height});
 const margin = ({top: 20, right: 60, bottom: 30, left: 40});
-const tooltip_offset = 15;
+const tooltip_offset = 5;
+const point_size = 5;
 const {significance_thresh} = options;
 
 const tooltip_style = {
@@ -19,19 +20,24 @@ const tooltip_style = {
 };
 
 const delete_button_style = {
-  borderRadius: '5px',
-  display: 'none',
+  borderRadius: '10px',
+  opacity: 0,
+  padding: '2px',
+  marginTop: '5px',
+  marginRight: '-11px',
+  backgroundColor: 'indianred',
+  textAlign : 'center',
+  width: '30px',
+  color: 'white',
 };
 
-
 let tooltips = [];
-// Holds the indices of rows that need tooltips drawn. 
-//const tooltip_indices = [100];
-//const tooltip_divs = svg.selectAll('.tooltip')
 
-const log10_pval_max = d3.max(data, d => {
-    // Add property to data
+
+const log10_pval_max = d3.max(data, (d,i) => {
+    // Add properties to data
     d.log10_p_val = -Math.log10(d.p_val);
+    d.index = i;
     // Return property to max function
     return d.log10_p_val;
   });
@@ -54,23 +60,17 @@ const x = d3.scaleLinear()
   .range([margin.left, width - margin.right]);
 
 
-const codes = svg.selectAll('.code_bubble')
+const codes = svg.selectAppend('g.code_bubbles')
+  .selectAll('.code_bubble')
   .data(data)
   .enter().append('circle')
   .at({
-    cx: (d,i) => x(i),
-    cy: (d,i) => y(d.log10_p_val),
-    r: 3,
-    fill: (d,i) => d.color
+    cx: d => x(d.index),
+    cy: d => y(d.log10_p_val),
+    fill: d => d.color,
+    r: point_size,
   })
-  .on('click', (d,i) => {
- 
-    d.y = d3.event.clientY + tooltip_offset;
-    d.x = d3.event.clientX + tooltip_offset;
-    
-    tooltips.push(d);
-    drawTooltips(tooltips);
-  });
+  .on('click', addTooltip(false));
   
 // Draw significance line on y-axis
 significance_line = svg.selectAppend('g.significance_line')
@@ -80,7 +80,7 @@ significance_line.selectAppend('line')
   .at({
     x1: margin.left,
     x2: width - margin.right,
-    stroke: 'lightgrey',
+    stroke: 'black',
     strokeWidth: 1,
   });
   
@@ -93,6 +93,18 @@ significance_line.selectAppend('text')
   .text(d3.format(".2e")(significance_thresh));
 
 
+function addTooltip(pin){
+  return function(d){
+    d.y = d3.event.clientY + tooltip_offset;
+    d.x = d3.event.clientX + tooltip_offset;
+   
+    // check if we already have an active tooltip for the selected code. 
+    if(!tooltips.find(code => code.code == d.code)){
+      tooltips.push(d);
+      drawTooltips(tooltips);  
+    }
+  };
+}
 
 function htmlFromProps(code){
   return Object.keys(code).reduce(
@@ -103,49 +115,83 @@ function htmlFromProps(code){
 
 function drawTooltips(tooltips){
   
+  const tooltip_lines = svg.selectAll('.tooltip_line')
+    .data(tooltips, d => d.code);
+    
+  tooltip_lines.enter().append('line')
+    .at({
+      x1: d => x(d.index),
+      y1: d => y(d.log10_p_val),
+      x2: d => d.x,
+      y2: d => d.y,
+      id: d => codeToId(d.code),
+      stroke: 'black',
+      strokeWidth: '1px',
+    })
+    .classed('tooltip_line', true);
+  
+  tooltip_lines.exit().remove();
+    
   const tooltip_divs = div.selectAll('.tooltip')
-    .data(tooltips);
+    .data(tooltips, d => d.code);
     
   const drawn_tips = tooltip_divs.enter()
     .append('div.tooltip')
     .st(tooltip_style)
-    .html(htmlFromProps)
     .on('mouseover', function(){
-      d3.select(this).select('button').style('display', 'block');
-      d3.select(this).select('span').style('display', 'block');
+      d3.select(this).select('button').style('opacity', 1);
     })
     .on('mouseout', function(){
-      d3.select(this).select('button').style('display', 'none');
-      d3.select(this).select('span').style('display', 'none');
-    });
+      d3.select(this).select('button').style('opacity', 0);
+    })
+    .call(
+      d3.drag()
+        .on('start.interrupt', function(){
+          // logic can go here if needed 
+        })
+        .on('start drag', function(d){
+          const {x, y} = d3.event;
+          d.x = x + tooltip_offset;
+          d.y = y + tooltip_offset;
+
+          d3.select(this).st({  
+            top: `${d.y}px`,
+            left:`${d.x}px`,
+          });
+          
+          svg.select(`#${codeToId(d.code)}`).at({  
+            x2: d.x,
+            y2: d.y,
+          });
+        })
+      );
+    
     
    drawn_tips
-    .append('button')
-    .text('Remove')
-    .st(delete_button_style)
-    .on('click', function(current){
-      const toDeleteIndex = tooltips.reduce((place, d, i) => d.code === current.code ? i : place, -1);
-      tooltips.splice(toDeleteIndex, 1);
-      drawTooltips(tooltips);
-    });
-    
-   drawn_tips
-    .append('span')
-    .html(`<img src = 'http://chittagongit.com//images/drag-icon/drag-icon-2.jpg' width = 20px, height = 20px/>`)
-    .style('display', 'none')
-    .on('drag',function(d){
-      const {clientX, clientY} = d3.event;
-      d.x = clientX + tooltip_offset;
-      d.y = clientY + tooltip_offset;
-      
-      d3.select(this).parent().st({  
-        top: `${d.y}px`,
-        left:`${d.x}px`,
+    .append('div')
+    .st({
+      textAlign: 'right',
+      height: '10px'    
+    })
+      .append('button')
+      .text('X')
+      .st(delete_button_style)
+      .on('click', function(current){
+        const toDeleteIndex = tooltips.reduce((place, d, i) => d.code === current.code ? i : place, -1);
+        tooltips.splice(toDeleteIndex, 1);
+        svg.select(`#${codeToId(current.code)}`).remove();
+        drawTooltips(tooltips);
       });
-      //drawTooltips(tooltips);
-    });
+    
+
+    drawn_tips.append('div')
+      .html(htmlFromProps);
   
   tooltip_divs.exit().remove(); 
+}
+
+function codeToId(code){
+  return `code_${code.replace('.', '_')}`;
 }
 
 //debugger;
