@@ -4,15 +4,19 @@
 //
 
 const svg = div.selectAppend('svg').at({width,height});
+// These aren't shown in the tooltip. 
+const ommitted_props = ['x', 'y', 'log10_p_val', 'color', 'index'];
 const margin = ({top: 20, right: 60, bottom: 30, left: 40});
 const tooltip_offset = 5;
 const point_size = 5;
 const {significance_thresh} = options;
 
+const pval_formatter = d3.format(".2e");
+
 const tooltip_style = {
   background:'white',
   borderRadius: '10px',
-  padding: '0px 15px',
+  padding: '0px 10px 10px 10px',
   boxShadow: '1px 1px 3px black',
   position:'fixed',
   top: d => `${d.y}px`,
@@ -23,8 +27,8 @@ const delete_button_style = {
   borderRadius: '10px',
   opacity: 0,
   padding: '2px',
-  marginTop: '5px',
-  marginRight: '-11px',
+  marginTop: '3px',
+  marginRight: '-7px',
   backgroundColor: 'indianred',
   textAlign : 'center',
   width: '30px',
@@ -90,7 +94,7 @@ significance_line.selectAppend('text')
     fontAlign: 'left',
     fontSize: 18
   })
-  .text(d3.format(".2e")(significance_thresh));
+  .text(pval_formatter(significance_thresh));
 
 
 function addTooltip(pin){
@@ -107,10 +111,12 @@ function addTooltip(pin){
 }
 
 function htmlFromProps(code){
-  return Object.keys(code).reduce(
-   (accum, curr, i) => accum + `<strong>${curr}:</strong> ${code[curr]} </br>`,
-   ''
-  );
+  return Object.keys(code)
+    .filter(prop => !ommitted_props.includes(prop))
+    .reduce(
+      (accum, curr, i) => accum + `<strong>${curr}:</strong> ${curr === 'p_val' ? pval_formatter(code[curr]) : code[curr]} </br>`,
+      ''
+    );
 }
 
 function drawTooltips(tooltips){
@@ -166,7 +172,6 @@ function drawTooltips(tooltips){
         })
       );
     
-    
    drawn_tips
     .append('div')
     .st({
@@ -183,7 +188,6 @@ function drawTooltips(tooltips){
         drawTooltips(tooltips);
       });
     
-
     drawn_tips.append('div')
       .html(htmlFromProps);
   
@@ -194,4 +198,3 @@ function codeToId(code){
   return `code_${code.replace('.', '_')}`;
 }
 
-//debugger;
