@@ -44,11 +44,9 @@ const delete_button_style = {
 
 
 // Small popup tooltip
-const popup = div.selectAppend('div.popup')
-  .st(popup_style);
+const popup = div.selectAppend('div.popup');
 
 let tooltips = [];
-
 
 const log10_pval_max = d3.max(data, (d,i) => {
     // Add properties to data
@@ -86,17 +84,17 @@ const codes = svg.selectAppend('g.code_bubbles')
     cy: d => y(d.log10_p_val),
     fill: d => d.color,
     r: point_size,
-    title: d => d.code,
   })
   .on('click', addTooltip(false))
   .on('mouseover', function(d){
+    //debugger;
     popup
      .st({
        left: d3.event.clientX + tooltip_offset*2,
        top: d3.event.clientY + tooltip_offset,
        display: 'block'
      })
-     .html(`<strong>Code:</strong> ${d.code}`);
+     .html(`<strong>${d.id}</strong>`);
   })
   .on('mouseout', function(d){
     popup.style('display', 'none');
@@ -129,7 +127,7 @@ function addTooltip(pin){
     d.x = d3.event.clientX + tooltip_offset;
    
     // check if we already have an active tooltip for the selected code. 
-    if(!tooltips.find(code => code.code == d.code)){
+    if(!tooltips.find(code => code.id == d.id)){
       tooltips.push(d);
       drawTooltips(tooltips);  
     }
@@ -148,7 +146,7 @@ function htmlFromProps(code){
 function drawTooltips(tooltips){
   
   const tooltip_lines = svg.selectAll('.tooltip_line')
-    .data(tooltips, d => d.code);
+    .data(tooltips, d => d.id);
     
   tooltip_lines.enter().append('line')
     .at({
@@ -156,7 +154,7 @@ function drawTooltips(tooltips){
       y1: d => y(d.log10_p_val),
       x2: d => d.x,
       y2: d => d.y,
-      id: d => codeToId(d.code),
+      id: d => codeToId(d.id),
       stroke: 'black',
       strokeWidth: '1px',
     })
@@ -165,7 +163,7 @@ function drawTooltips(tooltips){
   tooltip_lines.exit().remove();
     
   const tooltip_divs = div.selectAll('.annotation')
-    .data(tooltips, d => d.code);
+    .data(tooltips, d => d.id);
     
   const drawn_tips = tooltip_divs.enter()
     .append('div.annotation')
@@ -191,7 +189,7 @@ function drawTooltips(tooltips){
             left:`${d.x}px`,
           });
           
-          svg.select(`#${codeToId(d.code)}`).at({  
+          svg.select(`#${codeToId(d.id)}`).at({  
             x2: d.x,
             y2: d.y,
           });
@@ -208,9 +206,9 @@ function drawTooltips(tooltips){
       .text('X')
       .st(delete_button_style)
       .on('click', function(current){
-        const toDeleteIndex = tooltips.reduce((place, d, i) => d.code === current.code ? i : place, -1);
+        const toDeleteIndex = tooltips.reduce((place, d, i) => d.id === current.id ? i : place, -1);
         tooltips.splice(toDeleteIndex, 1);
-        svg.select(`#${codeToId(current.code)}`).remove();
+        svg.select(`#${codeToId(current.id)}`).remove();
         drawTooltips(tooltips);
       });
     
