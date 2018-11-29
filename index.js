@@ -5,7 +5,7 @@
 
 const svg = div.selectAppend('svg').at({width,height});
 // These aren't shown in the tooltip. 
-const ommitted_props = ['x', 'y', 'log10_p_val', 'color', 'index'];
+const ommitted_props = ['x', 'y', 'log10_p_val', 'color', 'index', 'p_val'];
 const margin = ({top: 20, right: 60, bottom: 30, left: 40});
 const tooltip_offset = 5;
 const point_size = 5;
@@ -23,6 +23,13 @@ const tooltip_style = {
   left:d => `${d.x}px`,
 };
 
+const popup_style = {
+  background:'rgba(255,255,255,0.7)',
+  position:'fixed',
+  textAlign: 'center',
+  fontSize: 18,
+};
+
 const delete_button_style = {
   borderRadius: '10px',
   opacity: 0,
@@ -35,12 +42,18 @@ const delete_button_style = {
   color: 'white',
 };
 
+
+// Small popup tooltip
+const popup = div.selectAppend('div.popup')
+  .st(popup_style);
+
 let tooltips = [];
 
 
 const log10_pval_max = d3.max(data, (d,i) => {
     // Add properties to data
     d.log10_p_val = -Math.log10(d.p_val);
+    d['P-Value'] = pval_formatter(d.p_val);
     d.index = i;
     // Return property to max function
     return d.log10_p_val;
@@ -73,8 +86,21 @@ const codes = svg.selectAppend('g.code_bubbles')
     cy: d => y(d.log10_p_val),
     fill: d => d.color,
     r: point_size,
+    title: d => d.code,
   })
-  .on('click', addTooltip(false));
+  .on('click', addTooltip(false))
+  .on('mouseover', function(d){
+    popup
+     .st({
+       left: d3.event.clientX + tooltip_offset*2,
+       top: d3.event.clientY + tooltip_offset,
+       display: 'block'
+     })
+     .html(`<strong>Code:</strong> ${d.code}`);
+  })
+  .on('mouseout', function(d){
+    popup.style('display', 'none');
+  });
   
 // Draw significance line on y-axis
 significance_line = svg.selectAppend('g.significance_line')
@@ -138,11 +164,11 @@ function drawTooltips(tooltips){
   
   tooltip_lines.exit().remove();
     
-  const tooltip_divs = div.selectAll('.tooltip')
+  const tooltip_divs = div.selectAll('.annotation')
     .data(tooltips, d => d.code);
     
   const drawn_tips = tooltip_divs.enter()
-    .append('div.tooltip')
+    .append('div.annotation')
     .st(tooltip_style)
     .on('mouseover', function(){
       d3.select(this).select('button').style('opacity', 1);
