@@ -7,7 +7,7 @@
 const svg = div.selectAppend('svg').at({width,height});
 // These aren't shown in the tooltip. 
 const ommitted_props = ['x', 'y', 'log10_p_val', 'color', 'index', 'p_val', 'annotated'];
-const margin = ({top: 20, right: 60, bottom: 30, left: 80});
+const margin = ({top: 20, right: 60, bottom: 30, left: 100});
 const tooltip_offset = 5;
 const point_size = 5;
 const {significance_thresh} = options;
@@ -91,7 +91,7 @@ function drawPlot(width, height){
   y.range([height - margin.bottom, margin.top]);
   x.range([margin.left, width - margin.right]);
 
-  svg.selectAppend("y_axis")
+  svg.selectAppend("g.y_axis")
     .call(function(g){
       g.attr("transform", `translate(${margin.left},0)`)
        .call(d3.axisLeft(y).tickSizeOuter(0));
@@ -156,12 +156,11 @@ function drawPlot(width, height){
   
   // axis labels
   svg.selectAppend("text.y_axis_label")
-    .style('text-anchor', 'middle')
+    .style('text-anchor', 'left')
     .at({
-      x: margin.left/2.2,
-      y: height/2,
-      fontSize: 18,
-      textAnchor: 'middle'
+      x: 0,
+      y: height/2 - 50,
+      fontSize: 18
     })
     .html("-Log<tspan baseline-shift='sub' font-size=12>10</tspan>(P)");
   
@@ -245,8 +244,6 @@ function drawPlot(width, height){
             d.x = x.invert(x_loc);
             d.y = y.invert(y_loc);
             
-            console.log(`Code ${d.id} has an x value of ${d.x}`)
-  
             d3.select(this).st({  
               top: `${y_loc}px`,
               left:`${x_loc}px`,
