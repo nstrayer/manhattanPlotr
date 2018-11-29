@@ -11,6 +11,11 @@ const tooltip_offset = 5;
 const point_size = 5;
 const {significance_thresh} = options;
 
+// Relative drag variables
+let code_start = {};
+let drag_start = {};
+
+
 const pval_formatter = d3.format(".2e");
 
 const tooltip_style = {
@@ -19,8 +24,6 @@ const tooltip_style = {
   padding: '0px 5px 6px',
   boxShadow: '1px 1px 3px black',
   position:'fixed',
-  top: d => `${d.y}px`,
-  left:d => `${d.x}px`,
   fontSize: '15px',
   width: '250px',
 };
@@ -88,9 +91,11 @@ const x = d3.scaleLinear()
 
 // scan through and assign bookkeeping props to the tooltips. 
 tooltips.forEach(d => {
-  d.x = x(d.index) + tooltip_offset;
-  d.y = y(d.log10_p_val) + tooltip_offset;
+  d.x = x.invert(x(d.index) + tooltip_offset);
+  d.y = y.invert(y(d.log10_p_val) + tooltip_offset);
 });
+
+
 
 const codes = svg.selectAppend('g.code_bubbles')
   .selectAll('.code_bubble')
@@ -163,8 +168,8 @@ drawTooltips(tooltips);
 
 function addTooltip(pin){
   return function(d){
-    d.y = d3.event.clientY + tooltip_offset;
-    d.x = d3.event.clientX + tooltip_offset;
+    d.y = y.invert(d3.event.clientY + tooltip_offset);
+    d.x = x.invert(d3.event.clientX + tooltip_offset);
    
     // check if we already have an active tooltip for the selected code. 
     if(!tooltips.find(code => code.id == d.id)){
@@ -192,8 +197,8 @@ function drawTooltips(tooltips){
     .at({
       x1: d => x(d.index),
       y1: d => y(d.log10_p_val),
-      x2: d => d.x,
-      y2: d => d.y,
+      x2: d => x(d.x),
+      y2: d => y(d.y),
       id: d => codeToId(d.id),
       stroke: 'black',
       strokeWidth: '1px',
@@ -208,6 +213,10 @@ function drawTooltips(tooltips){
   const drawn_tips = tooltip_divs.enter()
     .append('div.annotation')
     .st(tooltip_style)
+    .st({
+      top:d => `${y(d.y)}px`,
+      left:d => `${x(d.x)}px`,
+    })
     .on('mouseover', function(){
       d3.select(this).select('button').style('opacity', 1);
     })
@@ -216,22 +225,31 @@ function drawTooltips(tooltips){
     })
     .call(
       d3.drag()
-        .on('start.interrupt', function(){
-          // logic can go here if needed 
+        .on('start', function(d){
+          // record initial conditions of drag for later calculating movement.
+          drag_start = d3.event;
+          code_start = {x:x(d.x), y:y(d.y)};
         })
-        .on('start drag', function(d){
-          const {x, y} = d3.event;
-          d.x = x + tooltip_offset;
-          d.y = y + tooltip_offset;
+        .on('drag', function(d){
+          const drag_change = {
+            x: d3.event.x - drag_start.x,
+            y: d3.event.y - drag_start.y,
+          };
+          
+          const x_loc = code_start.x + drag_change.x;
+          const y_loc = code_start.y + drag_change.y;
+        
+          d.x = x.invert(x_loc);
+          d.y = y.invert(y_loc);
 
           d3.select(this).st({  
-            top: `${d.y}px`,
-            left:`${d.x}px`,
+            top: `${y_loc}px`,
+            left:`${x_loc}px`,
           });
           
           svg.select(`#${codeToId(d.id)}`).at({  
-            x2: d.x,
-            y2: d.y,
+            x2: x_loc,
+            y2: y_loc,
           });
         })
       );
