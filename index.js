@@ -6,11 +6,18 @@
 
 const svg = div.selectAppend('svg').at({width,height});
 // These aren't shown in the tooltip. 
-const ommitted_props = ['x', 'y', 'log10_p_val', 'color', 'index', 'p_val', 'annotated'];
+const ommitted_props = ['x', 'y', 'log10_p_val', 'color', 'index', 'p_val', 'annotated', 'initialized'];
 const margin = ({top: 20, right: 60, bottom: 30, left: 100});
 const tooltip_offset = 5;
 const point_size = 5;
 const {significance_thresh} = options;
+
+// annotation settings
+const id_font_size = 20;
+const annotation_pad = 10;
+const line_height = 20;
+const background_size = {width: 250, height: 150};
+const delete_button_radius = 13;
 
 // Relative drag variables
 let code_start = {};
@@ -18,6 +25,14 @@ let drag_start = {};
 
 
 const pval_formatter = d3.format(".2e");
+
+const styles = {
+  annotation: {
+    ...background_size,
+    fill: 'white',
+    rx: 10,
+  }
+};
 
 const tooltip_style = {
   background:'rgba(255,255,255,0.9)',
@@ -190,40 +205,21 @@ function drawPlot(width, height){
   }
   
   function drawTooltips(tooltips){
-    const tooltip_lines = svg.selectAll('.tooltip_line')
-      .data(tooltips, d => d.id);
-      
-    tooltip_lines.enter().append('line.tooltip_line')
-      .merge(tooltip_lines)
-      .at({
-        x1: d => x(d.index),
-        y1: d => y(d.log10_p_val),
-        x2: d => x(d.x),
-        y2: d => y(d.y),
-        id: d => codeToId(d.id),
-        stroke: 'black',
-        strokeWidth: '1px',
-      })
-      .classed('tooltip_line', true);
     
-    tooltip_lines.exit().remove();
-      
-    const tooltip_divs = div.selectAll('.annotation')
+    const tooltip_g = svg.append('g.tooltip_container')
+      .selectAll('g.tooltip')
       .data(tooltips, d => d.id);
-      
-    drawn_tips = tooltip_divs.enter()
-      .append('div.annotation')
-      .merge(tooltip_divs)
-      .st(tooltip_style)
-      .st({
-        top:d => `${y(d.y)}px`,
-        left:d => `${x(d.x)}px`,
-      })
+    
+    // draw new tooltips and move the old ones to the correct positions
+    const tooltip_containers = tooltip_g.enter()
+      .append('g.tooltip')
+      .merge(tooltip_g)
+      .translate(d => [x(d.x), y(d.y)])
       .on('mouseover', function(){
-        d3.select(this).select('button').style('opacity', 1);
+        d3.select(this).selectAll('.delete_button').style('opacity', 1);
       })
       .on('mouseout', function(){
-        d3.select(this).select('button').style('opacity', 0);
+        d3.select(this).selectAll('.delete_button').style('opacity', 0);
       })
       .call(
         d3.drag()
@@ -244,38 +240,76 @@ function drawPlot(width, height){
             d.x = x.invert(x_loc);
             d.y = y.invert(y_loc);
             
-            d3.select(this).st({  
-              top: `${y_loc}px`,
-              left:`${x_loc}px`,
-            });
-            
+            d3.select(this).translate(d => [x_loc,y_loc]);
+
             svg.select(`#${codeToId(d.id)}`).at({  
               x2: x_loc,
               y2: y_loc,
             });
           })
         );
+    
+    // remove any deleted tooltips
+    tooltip_g.exit().remove();
+    
+    // Draw a basic rectangle box for each tooltip to write on. 
+    tooltip_containers.selectAppend('rect')
+      .at(styles.annotation);
+    
+    // Add contents of annotation as text
+    tooltip_containers.selectAppend('text')
+      .attr('alignment-baseline', 'hanging')
+      .html(textFromProps);
       
-     drawn_tips
-      .selectAppend('div.delete_button')
-      .st({
-        textAlign: 'right',
-        height: '10px'    
+    // Add delete button that will appear on mouseover
+    tooltip_containers.selectAppend('circle.delete_button')
+      .at({
+        cx: styles.annotation.width - delete_button_radius,
+        cy: delete_button_radius,
+        r: delete_button_radius, 
+        fill: 'orangered'
       })
-        .selectAppend('button')
-        .text('X')
-        .st(delete_button_style)
-        .on('click', function(current){
+      .style('opacity', 0)
+      .on('click',function(current){
           const toDeleteIndex = tooltips.reduce((place, d, i) => d.id === current.id ? i : place, -1);
           tooltips.splice(toDeleteIndex, 1);
-          svg.select(`#${codeToId(current.id)}`).remove();
-          drawTooltips(tooltips);
-        });
-      
-      drawn_tips.selectAppend('div.annotation_body')
-        .html(htmlFromProps);
+          svg.select(`#${codeToId(current.id)}`).remove(); // deletes the line.
+          drawTooltips(tooltips);      
+      })
     
-    tooltip_divs.exit().remove(); 
+    tooltip_containers.selectAppend('text.delete_button')
+      .at({
+        x: styles.annotation.width - delete_button_radius,
+        y: delete_button_radius,
+        alignmentBaseline: 'middle',
+        textAnchor: 'middle',
+        fill: 'white'
+      })
+      .text('X')
+      .st({
+        opacity: 0,
+        pointerEvents:'none',
+      })
+    
+    const tooltip_lines = svg.selectAll('.tooltip_line')
+      .data(tooltips, d => d.id);
+      
+    tooltip_lines.enter().append('line.tooltip_line')
+      .merge(tooltip_lines)
+      .at({
+        x1: d => x(d.index),
+        y1: d => y(d.log10_p_val),
+        x2: d => x(d.x),
+        y2: d => y(d.y),
+        id: d => codeToId(d.id),
+        stroke: 'black',
+        strokeWidth: '1px',
+      })
+      .classed('tooltip_line', true);
+    
+    tooltip_lines.exit().remove();
+      
+    
   }
 
 }
@@ -288,6 +322,22 @@ function htmlFromProps(code){
       (accum, curr, i) => curr == 'id' ? `<span style='${code_span_style}'>${code[curr]}</span></br><hr style = '${hr_style}'>` : accum + `<strong>${curr}:</strong> ${curr === 'p_val' ? pval_formatter(code[curr]) : code[curr]} </br>`,
       ''
     );
+}
+
+function textFromProps(code){
+  return Object.keys(code)
+    .filter(prop => !ommitted_props.includes(prop))
+    .reduce(
+      (accum, prop, i) => {
+        const value = prop === 'p_val' ?  pval_formatter(code[prop]): code[prop];
+        
+        const line_body = prop === 'id' ? 
+                            `<tspan font-weight='bold' font-size='${id_font_size}px'>${value}</tspan>`:
+                            `<tspan font-weight='bold'>${prop}:</tspan> ${value}`;
+                            
+        const new_line = `<tspan x=${annotation_pad} dy=${line_height}>${line_body}</tspan>`;
+        return accum + new_line;
+    }, '');
 }
 
 
