@@ -3,6 +3,14 @@
 // r2d3: https://rstudio.github.io/r2d3
 //
 
+d3.selection.prototype.moveToBack = function() {  
+  return this.each(function() { 
+    var firstChild = this.parentNode.firstChild; 
+    if (firstChild) { 
+      this.parentNode.insertBefore(this, firstChild); 
+    } 
+  });
+};
 
 const svg = div.selectAppend('svg').at({width,height});
 // These aren't shown in the tooltip. 
@@ -207,7 +215,8 @@ function drawPlot(width, height){
   
   function drawTooltips(tooltips){
       
-    const tooltip_lines = svg.selectAll('.tooltip_line')
+    const tooltip_lines = svg.selectAppend('g.tooltip_lines')
+      .selectAll('.tooltip_line')
       .data(tooltips, d => d.id);
     
     tooltip_lines.enter().append('line.tooltip_line')
@@ -224,6 +233,8 @@ function drawPlot(width, height){
       .classed('tooltip_line', true);
     
     tooltip_lines.exit().remove();
+    
+    svg.select('g.tooltip_lines').moveToBack();
     
     const tooltip_g = svg.selectAppend('g.tooltip_container')
       .selectAll('g.tooltip')
@@ -327,20 +338,9 @@ function drawPlot(width, height){
         opacity: 0,
         pointerEvents:'none',
       });
-    
   }
-
 }
 
-
-function htmlFromProps(code){
-  return Object.keys(code)
-    .filter(prop => !ommitted_props.includes(prop))
-    .reduce(
-      (accum, curr, i) => curr == 'id' ? `<span style='${code_span_style}'>${code[curr]}</span></br><hr style = '${hr_style}'>` : accum + `<strong>${curr}:</strong> ${curr === 'p_val' ? pval_formatter(code[curr]) : code[curr]} </br>`,
-      ''
-    );
-}
 
 function textFromProps(code){
   return Object.keys(code)
@@ -357,7 +357,6 @@ function textFromProps(code){
         return accum + new_line;
     }, '');
 }
-
 
 
 function codeToId(code){
