@@ -33,5 +33,6 @@ data <- readr::read_csv('rs3211783_phewas.csv') %>%
   right_join(category_colors, by = c("Category" = "description")) %>% 
   mutate(
     annotated = id %in% codes_to_annotate
-  )
+  ) %>% 
+  select(-Cases, -Controls, -OR)
 
