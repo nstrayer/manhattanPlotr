@@ -26,6 +26,7 @@ const annotation_pad = 10;
 const line_height = 20;
 const background_size = {width: 250, height: 150};
 const delete_button_radius = 13;
+const delete_button_pad = 3;
 
 // Relative drag variables
 let code_start = {};
@@ -39,82 +40,91 @@ const styles = {
     stroke: 'lightgrey',
     strokeWidth: '1px',
     fill: 'white',
-    rx: '10',
-  }
+    rx: '15',
+    cursor: 'move',
+  },
+  code_popup: {
+    background:'rgba(255,255,255,0.7)',
+    position:'fixed',
+    textAlign: 'center',
+    fontSize: 18,
+  },
+  sig_line: {
+    stroke: 'black',
+    opacity: 0.5,
+    strokeWidth: 1,
+    x1: margin.left,
+  },
+  sig_line_text: {
+    fontAlign: 'left',
+    fontSize: 18,
+  },
+  axis_label: {
+    fontAlign: 'middle',
+    fontSize: 18,
+  },
+  tooltip_lines: {
+    stroke: 'black',
+    strokeWidth: '1px',
+  },
+  delete_button: {
+    cx: - delete_button_radius,
+    cy: delete_button_radius,
+    r: delete_button_radius, 
+    fill: 'orangered'
+  },
+  delete_button_x: {
+    x: -delete_button_radius,
+    y: delete_button_radius,
+    alignmentBaseline: 'middle',
+    textAnchor: 'middle',
+    fill: 'white',
+    opacity: 0,
+    pointerEvents:'none',
+  },
 };
-
-const tooltip_style = {
-  background:'rgba(255,255,255,0.9)',
-  borderRadius: '10px',
-  padding: '0px 5px 6px',
-  boxShadow: '1px 1px 3px black',
-  position:'fixed',
-  fontSize: '15px',
-  width: '250px',
-};
-
-const popup_style = {
-  background:'rgba(255,255,255,0.7)',
-  position:'fixed',
-  textAlign: 'center',
-  fontSize: 18,
-};
-
-const delete_button_style = {
-  borderRadius: '10px',
-  opacity: 0,
-  padding: '2px',
-  marginTop: '3px',
-  marginRight: '-2px',
-  backgroundColor: 'indianred',
-  textAlign : 'center',
-  width: '30px',
-  color: 'white',
-};
-
-const code_span_style = `font-weight:bold; font-size:20px; color:#3e3ef1`;
-const hr_style = `height: 0;margin-top: 0em;margin-bottom: .1em;border: 0;border-top: 1px solid #bcbbbb;`;
 
 // Small popup tooltip
-const popup = div.selectAppend('div.popup').st(popup_style);
+const popup = div.selectAppend('div.popup').st(styles.code_popup);
 
 //let starting_annotations = [];
 let tooltips = [];
 
 const log10_pval_max = d3.max(data, (d,i) => {
-    // Add properties to data
-    d.log10_p_val = -Math.log10(d.p_val);
-    d['P-Value'] = pval_formatter(d.p_val);
-    d.index = i;
-    
-    // Check if given code is annotated or not first. 
-    if(d.annotated){
-      tooltips.push(d);
-    }
-    
-    // Return property to max function
-    return d.log10_p_val;
-  });
+  // Add properties to data
+  d.log10_p_val = -Math.log10(d.p_val);
+  d['P-Value'] = pval_formatter(d.p_val);
+  d.index = i;
+  
+  // Check if given code is annotated or not first
+  if(d.annotated) tooltips.push(d);
+  
+  // Return property to max function
+  return d.log10_p_val;
+});
 
 const log10_threshold = -Math.log10(significance_thresh);
-
 const y_max = options.y_max || Math.max(log10_threshold, log10_pval_max);
 
+// Setup x and y scales
 const y = d3.scaleLinear().domain([0,y_max]).nice();
 const x = d3.scaleLinear().domain([0, data.length]);
 
 
-// Kick of the visualization
+// Kick off the visualization
 drawPlot(width, height);
+// Setup resize behavior
 r2d3.onResize(drawPlot);
 
 function drawPlot(width, height){
-  
+  // Resize svg
   svg.at({width,height});
   
+  // Update the ranges of our scales
   y.range([height - margin.bottom, margin.top]);
   x.range([margin.left, width - margin.right]);
 
+  // Draw the y axis
   svg.selectAppend("g.y_axis")
     .call(function(g){
       g.attr("transform", `translate(${margin.left},0)`)
@@ -130,6 +140,7 @@ function drawPlot(width, height){
     } 
   });
   
+  // Setup the actual plot points
   const codes = svg.selectAppend('g.code_bubbles')
     .selectAll('.code_bubble')
     .data(data, d => d.id);
@@ -164,17 +175,14 @@ function drawPlot(width, height){
     
   significance_line.selectAppend('line')
     .at({
-      x1: margin.left,
       x2: width - margin.right,
-      stroke: 'black',
-      strokeWidth: 1,
+      ...styles.sig_line,
     });
     
   significance_line.selectAppend('text')
     .at({
       x: width - margin.right,
-      fontAlign: 'left',
-      fontSize: 18
+      ...styles.sig_line_text,
     })
     .text(pval_formatter(significance_thresh));
   
@@ -182,19 +190,17 @@ function drawPlot(width, height){
   svg.selectAppend("text.y_axis_label")
     .style('text-anchor', 'left')
     .at({
-      x: 0,
+      ...styles.axis_label,
       y: height/2 - 50,
-      fontSize: 18
     })
     .html("-Log<tspan baseline-shift='sub' font-size=12>10</tspan>(P)");
   
   svg.selectAppend("text.x_axis_label")
     .style('text-anchor', 'middle')
     .at({
+      ...styles.axis_label,
       x: width/2,
       y: height,
-      fontSize: 18,
-      textAnchor: 'middle'
     })
     .text(options.x_axis);
    
@@ -227,13 +233,13 @@ function drawPlot(width, height){
         x2: d => x(d.x) + background_size.width/2 ,
         y2: d => y(d.y) + background_size.height/2,
         id: d => codeToId(d.id),
-        stroke: 'black',
-        strokeWidth: '1px',
+        ...styles.tooltip_lines,
       })
       .classed('tooltip_line', true);
     
     tooltip_lines.exit().remove();
     
+    // Move the lines to the back so the points cover them. 
     svg.select('g.tooltip_lines').moveToBack();
     
     const tooltip_g = svg.selectAppend('g.tooltip_container')
@@ -291,6 +297,7 @@ function drawPlot(width, height){
     // Add contents of annotation as text
     tooltip_containers.selectAppend('text')
       .attr('alignment-baseline', 'hanging')
+      .style('pointer-events', 'none')
       .html(textFromProps)
       .each(function(text_block) {
          const text_size = this.getBBox();
@@ -307,37 +314,23 @@ function drawPlot(width, height){
     const delete_button = tooltip_containers.selectAppend('g.delete_button')
       .translate(function(d){
         const parent_rect = d3.select(this).parent().select('rect');
-        return [parent_rect.attr('width'), 0];
+        return [parent_rect.attr('width') - delete_button_pad, delete_button_pad];
       });
     
     delete_button.selectAppend('circle.delete_button')
-      .at({
-        cx: - delete_button_radius,
-        cy: delete_button_radius,
-        r: delete_button_radius, 
-        fill: 'orangered'
-      })
+      .at(styles.delete_button)
       .style('opacity', 0)
       .on('click',function(current){
           const toDeleteIndex = tooltips.reduce((place, d, i) => d.id === current.id ? i : place, -1);
           tooltips.splice(toDeleteIndex, 1);
-          svg.select(`#${codeToId(current.id)}`).remove(); // deletes the line.
+          
+          svg.select(`#${codeToId(current.id)}`).remove(); // delete line.
           drawTooltips(tooltips);
       });
     
     delete_button.selectAppend('text.delete_button')
-      .at({
-        x: -delete_button_radius,
-        y: delete_button_radius,
-        alignmentBaseline: 'middle',
-        textAnchor: 'middle',
-        fill: 'white'
-      })
-      .text('X')
-      .st({
-        opacity: 0,
-        pointerEvents:'none',
-      });
+      .at(styles.delete_button_x)
+      .text('X');
   }
 }
 
