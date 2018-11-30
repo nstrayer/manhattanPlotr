@@ -1,4 +1,4 @@
-// !preview r2d3 data=data, options = list(significance_thresh = 1e-3, color_key = category_colors, x_axis = 'Phecode', y_max = 5), container = 'div', dependencies = 'd3-jetpack'
+// !preview r2d3 data=data, options = list(significance_thresh = 1.6e-5, color_key = category_colors, x_axis = 'Phecode', y_max = 5), container = 'div', dependencies = 'd3-jetpack'
 //
 // r2d3: https://rstudio.github.io/r2d3
 //
