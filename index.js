@@ -27,10 +27,11 @@ let drag_start = {};
 const pval_formatter = d3.format(".2e");
 
 const styles = {
-  annotation: {
-    ...background_size,
+  annotation_rect: {
+    stroke: 'lightgrey',
+    strokeWidth: '1px',
     fill: 'white',
-    rx: 10,
+    rx: '10',
   }
 };
 
@@ -205,8 +206,26 @@ function drawPlot(width, height){
   }
   
   function drawTooltips(tooltips){
+      
+    const tooltip_lines = svg.selectAll('.tooltip_line')
+      .data(tooltips, d => d.id);
     
-    const tooltip_g = svg.append('g.tooltip_container')
+    tooltip_lines.enter().append('line.tooltip_line')
+      .merge(tooltip_lines)
+      .at({
+        x1: d => x(d.index),
+        y1: d => y(d.log10_p_val),
+        x2: d => x(d.x) + background_size.width/2 ,
+        y2: d => y(d.y) + background_size.height/2,
+        id: d => codeToId(d.id),
+        stroke: 'black',
+        strokeWidth: '1px',
+      })
+      .classed('tooltip_line', true);
+    
+    tooltip_lines.exit().remove();
+    
+    const tooltip_g = svg.selectAppend('g.tooltip_container')
       .selectAll('g.tooltip')
       .data(tooltips, d => d.id);
     
@@ -243,28 +262,46 @@ function drawPlot(width, height){
             d3.select(this).translate(d => [x_loc,y_loc]);
 
             svg.select(`#${codeToId(d.id)}`).at({  
-              x2: x_loc,
-              y2: y_loc,
+              x2: x_loc + background_size.width/2,
+              y2: y_loc + background_size.height/2,
             });
           })
         );
     
     // remove any deleted tooltips
-    tooltip_g.exit().remove();
+    tooltip_g.exit()
+      .remove();
     
     // Draw a basic rectangle box for each tooltip to write on. 
     tooltip_containers.selectAppend('rect')
-      .at(styles.annotation);
+      .at(background_size)
+      .st(styles.annotation_rect);
     
     // Add contents of annotation as text
     tooltip_containers.selectAppend('text')
       .attr('alignment-baseline', 'hanging')
-      .html(textFromProps);
+      .html(textFromProps)
+      .each(function(text_block) {
+         const text_size = this.getBBox();
+
+         d3.select(this).parent().select('rect')
+          .at({
+            width: text_size.width + annotation_pad*2,
+            height: text_size.height + annotation_pad,
+          });
+      });
       
+    
     // Add delete button that will appear on mouseover
-    tooltip_containers.selectAppend('circle.delete_button')
+    const delete_button = tooltip_containers.selectAppend('g.delete_button')
+      .translate(function(d){
+        const parent_rect = d3.select(this).parent().select('rect');
+        return [parent_rect.attr('width'), 0];
+      });
+    
+    delete_button.selectAppend('circle.delete_button')
       .at({
-        cx: styles.annotation.width - delete_button_radius,
+        cx: - delete_button_radius,
         cy: delete_button_radius,
         r: delete_button_radius, 
         fill: 'orangered'
@@ -274,12 +311,12 @@ function drawPlot(width, height){
           const toDeleteIndex = tooltips.reduce((place, d, i) => d.id === current.id ? i : place, -1);
           tooltips.splice(toDeleteIndex, 1);
           svg.select(`#${codeToId(current.id)}`).remove(); // deletes the line.
-          drawTooltips(tooltips);      
-      })
+          drawTooltips(tooltips);
+      });
     
-    tooltip_containers.selectAppend('text.delete_button')
+    delete_button.selectAppend('text.delete_button')
       .at({
-        x: styles.annotation.width - delete_button_radius,
+        x: -delete_button_radius,
         y: delete_button_radius,
         alignmentBaseline: 'middle',
         textAnchor: 'middle',
@@ -289,26 +326,7 @@ function drawPlot(width, height){
       .st({
         opacity: 0,
         pointerEvents:'none',
-      })
-    
-    const tooltip_lines = svg.selectAll('.tooltip_line')
-      .data(tooltips, d => d.id);
-      
-    tooltip_lines.enter().append('line.tooltip_line')
-      .merge(tooltip_lines)
-      .at({
-        x1: d => x(d.index),
-        y1: d => y(d.log10_p_val),
-        x2: d => x(d.x),
-        y2: d => y(d.y),
-        id: d => codeToId(d.id),
-        stroke: 'black',
-        strokeWidth: '1px',
-      })
-      .classed('tooltip_line', true);
-    
-    tooltip_lines.exit().remove();
-      
+      });
     
   }
 
