@@ -158,8 +158,8 @@ function drawPlot(width, height){
     .on('mouseover', function(d){
       popup
        .st({
-         left: d3.event.clientX + tooltip_offset*2,
-         top: d3.event.clientY + tooltip_offset,
+         left: x(d.index) + tooltip_offset*2,
+         top:  y(d.log10_p_val) - tooltip_offset*2,
          display: 'block'
        })
        .html(`<strong>${d.id}</strong>`);
