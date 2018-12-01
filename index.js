@@ -1,4 +1,4 @@
-// !preview r2d3 data=data, options = list(significance_thresh = 1.6e-5, color_key = category_colors, x_axis = 'Phecode', y_max = 5), container = 'div', dependencies = 'd3-jetpack'
+// !preview r2d3 data=data, options = list(significance_thresh = 1.6e-5, color_key = category_colors, x_axis = 'Phecode', y_max = 5, simple_annotation = TRUE, cols_to_ignore = c('P-Value', 'Category', 'OR', 'Cases', 'Controls')), container = 'div', dependencies = 'd3-jetpack'
 //
 // r2d3: https://rstudio.github.io/r2d3
 //
@@ -14,7 +14,7 @@ d3.selection.prototype.moveToBack = function() {
 
 const svg = div.selectAppend('svg').at({width,height});
 // These aren't shown in the tooltip. 
-const ommitted_props = ['x', 'y', 'log10_p_val', 'color', 'index', 'p_val', 'annotated', 'initialized'];
+const ommitted_props = [...options.cols_to_ignore, 'x', 'y', 'log10_p_val', 'color', 'index', 'p_val', 'annotated', 'initialized', (options.simple_annotation ? 'id': '')];
 const margin = ({top: 20, right: 60, bottom: 30, left: 100});
 const tooltip_offset = 5;
 const point_size = 5;
@@ -221,30 +221,17 @@ function drawPlot(width, height){
   
   function drawTooltips(tooltips){
       
-    const tooltip_lines = svg.selectAppend('g.tooltip_lines')
-      .selectAll('.tooltip_line')
-      .data(tooltips, d => d.id);
-    
-    tooltip_lines.enter().append('line.tooltip_line')
-      .merge(tooltip_lines)
-      .at({
-        x1: d => x(d.index),
-        y1: d => y(d.log10_p_val),
-        x2: d => x(d.x) + background_size.width/2 ,
-        y2: d => y(d.y) + background_size.height/2,
-        id: d => codeToId(d.id),
-        ...styles.tooltip_lines,
-      })
-      .classed('tooltip_line', true);
-    
-    tooltip_lines.exit().remove();
-    
-    // Move the lines to the back so the points cover them. 
-    svg.select('g.tooltip_lines').moveToBack();
+
     
     const tooltip_g = svg.selectAppend('g.tooltip_container')
       .selectAll('g.tooltip')
       .data(tooltips, d => d.id);
+    
+    // Logic for determining where to start an annotation tooltip line. 
+    const line_start_atts = {
+      x2: d => x(d.x) + tooltip_containers.select(`rect.${codeToId(d.id)}`).attr('width')/2, 
+      y2: d => y(d.y) + tooltip_containers.select(`rect.${codeToId(d.id)}`).attr('height')/2
+    }
     
     // draw new tooltips and move the old ones to the correct positions
     const tooltip_containers = tooltip_g.enter()
@@ -278,10 +265,7 @@ function drawPlot(width, height){
             
             d3.select(this).translate(d => [x_loc,y_loc]);
 
-            svg.select(`#${codeToId(d.id)}`).at({  
-              x2: x_loc + background_size.width/2,
-              y2: y_loc + background_size.height/2,
-            });
+            svg.select(`#${codeToId(d.id)}`).at(line_start_atts);
           })
         );
     
@@ -292,7 +276,8 @@ function drawPlot(width, height){
     // Draw a basic rectangle box for each tooltip to write on. 
     tooltip_containers.selectAppend('rect')
       .at(background_size)
-      .st(styles.annotation_rect);
+      .st(styles.annotation_rect)
+      .attr('class', d => codeToId(d.id));
     
     // Add contents of annotation as text
     tooltip_containers.selectAppend('text')
@@ -331,6 +316,27 @@ function drawPlot(width, height){
     delete_button.selectAppend('text.delete_button')
       .at(styles.delete_button_x)
       .text('X');
+      
+      
+    const tooltip_lines = svg.selectAppend('g.tooltip_lines')
+      .selectAll('.tooltip_line')
+      .data(tooltips, d => d.id);
+    
+    tooltip_lines.enter().append('line.tooltip_line')
+      .merge(tooltip_lines)
+      .at({
+        x1: d => x(d.index),
+        y1: d => y(d.log10_p_val),
+        id: d => codeToId(d.id),
+        ...line_start_atts,
+        ...styles.tooltip_lines,
+      })
+      .classed('tooltip_line', true);
+    
+    tooltip_lines.exit().remove();
+    
+    // Move the lines to the back so the points cover them. 
+    svg.select('g.tooltip_lines').moveToBack();
   }
 }
 
@@ -342,10 +348,13 @@ function textFromProps(code){
       (accum, prop, i) => {
         const value = prop === 'p_val' ?  pval_formatter(code[prop]): code[prop];
         
-        const line_body = prop === 'id' ? 
-                            `<tspan font-weight='bold' font-size='${id_font_size}px'>${value}</tspan>`:
-                            `<tspan font-weight='bold'>${prop}:</tspan> ${value}`;
-                            
+        
+        const line_body = options.simple_annotation ?
+                            value:
+                            (prop === 'id' ? 
+                              `<tspan font-weight='bold' font-size='${id_font_size}px'>${value}</tspan>`:
+                              `<tspan font-weight='bold'>${prop}:</tspan> ${value}`);
+
         const new_line = `<tspan x=${annotation_pad} dy=${line_height}>${line_body}</tspan>`;
         return accum + new_line;
     }, '');
