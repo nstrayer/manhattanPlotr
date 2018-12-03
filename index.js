@@ -1,4 +1,4 @@
-// !preview r2d3 data=data, options = list(axis_font_size = 15, axis_title_size = 22, point_size = 4, significance_thresh = 1.6e-5, color_key = category_colors, x_axis = 'Phecode', y_max = 5, download_button = TRUE, simple_annotation = TRUE, cols_to_ignore = c('P-Value', 'Category', 'OR', 'Cases', 'Controls')), container = 'div', dependencies = 'd3-jetpack'
+// !preview r2d3 data=data, options = list(grid_snap = TRUE, axis_font_size = 15, axis_title_size = 22, point_size = 4, significance_thresh = 1.6e-5, color_key = category_colors, x_axis = 'Phecode', y_max = 5, download_button = TRUE, simple_annotation = TRUE, cols_to_ignore = c('P-Value', 'Category', 'OR', 'Cases', 'Controls')), container = 'div', dependencies = 'd3-jetpack'
 //
 // r2d3: https://rstudio.github.io/r2d3
 //
@@ -281,8 +281,8 @@ function drawPlot(width, height){
               y: d3.event.y - drag_start.y,
             };
             
-            const x_loc = code_start.x + drag_change.x;
-            const y_loc = code_start.y + drag_change.y;
+            const x_loc = snapToGrid(code_start.x + drag_change.x, options.grid_snap?10:1);
+            const y_loc = snapToGrid(code_start.y + drag_change.y, options.grid_snap?10:1);
           
             d.x = x.invert(x_loc);
             d.y = y.invert(y_loc);
@@ -399,4 +399,8 @@ function downloadPlot(svg){
   document.body.appendChild(downloadLink);
   downloadLink.click();
   document.body.removeChild(downloadLink);
+}
+
+function snapToGrid(x, grid_step){
+  return Math.round(x / grid_step) * grid_step;
 }
