@@ -1,4 +1,4 @@
-// !preview r2d3 data=data, options = list(significance_thresh = 1.6e-5, color_key = category_colors, x_axis = 'Phecode', y_max = 5, simple_annotation = TRUE, cols_to_ignore = c('P-Value', 'Category', 'OR', 'Cases', 'Controls')), container = 'div', dependencies = 'd3-jetpack'
+// !preview r2d3 data=data, options = list(axis_font_size = 15, axis_title_size = 22, point_size = 4, significance_thresh = 1.6e-5, color_key = category_colors, x_axis = 'Phecode', y_max = 5, download_button = TRUE, simple_annotation = TRUE, cols_to_ignore = c('P-Value', 'Category', 'OR', 'Cases', 'Controls')), container = 'div', dependencies = 'd3-jetpack'
 //
 // r2d3: https://rstudio.github.io/r2d3
 //
@@ -13,15 +13,26 @@ d3.selection.prototype.moveToBack = function() {
 };
 
 const svg = div.selectAppend('svg').at({width,height});
+
+if(options.download_button){
+  div.selectAppend('button')
+    .text('Download Plot')
+    .st({
+      position: 'fixed',
+      marginTop: '-17px',
+    })
+    .on('click', function(){downloadPlot(svg)});
+}
+  
 // These aren't shown in the tooltip. 
 const ommitted_props = [...options.cols_to_ignore, 'x', 'y', 'log10_p_val', 'color', 'index', 'p_val', 'annotated', 'initialized', (options.simple_annotation ? 'id': '')];
 const margin = ({top: 20, right: 60, bottom: 30, left: 100});
 const tooltip_offset = 5;
-const point_size = 5;
+const point_size = options.point_size || 5;
 const {significance_thresh} = options;
 
 // annotation settings
-const id_font_size = 20;
+const id_font_size = options.id_dont_size || 20;
 const annotation_pad = 10;
 const line_height = 20;
 const background_size = {width: 250, height: 150};
@@ -43,6 +54,10 @@ const styles = {
     rx: '15',
     cursor: 'move',
   },
+  annotation_text: {
+    pointerEvents: 'none',
+    fontSize: 20,
+  },
   code_popup: {
     background:'rgba(255,255,255,0.7)',
     position:'fixed',
@@ -61,7 +76,12 @@ const styles = {
   },
   axis_label: {
     fontAlign: 'middle',
-    fontSize: 18,
+    fontSize: options.axis_title_size || 18,
+    fill: 'rgb(88, 110, 117)'
+  },
+  axis_ticks: {
+    fill: 'rgb(88, 110, 117)',
+    fontSize: options.axis_font_size || '20px',
   },
   tooltip_lines: {
     stroke: 'black',
@@ -129,7 +149,9 @@ function drawPlot(width, height){
     .call(function(g){
       g.attr("transform", `translate(${margin.left},0)`)
        .call(d3.axisLeft(y).tickSizeOuter(0));
-    });
+    })
+    .selectAll('text')
+    .st(styles.axis_ticks);
     
   // scan through and assign bookkeeping props to the tooltips. 
   tooltips.forEach(d => {
@@ -217,6 +239,8 @@ function drawPlot(width, height){
          drawTooltips(tooltips);  
        }
      };
+     
+
   }
   
   function drawTooltips(tooltips){
@@ -282,7 +306,7 @@ function drawPlot(width, height){
     // Add contents of annotation as text
     tooltip_containers.selectAppend('text')
       .attr('alignment-baseline', 'hanging')
-      .style('pointer-events', 'none')
+      .st(styles.annotation_text)
       .html(textFromProps)
       .each(function(text_block) {
          const text_size = this.getBBox();
@@ -348,7 +372,6 @@ function textFromProps(code){
       (accum, prop, i) => {
         const value = prop === 'p_val' ?  pval_formatter(code[prop]): code[prop];
         
-        
         const line_body = options.simple_annotation ?
                             value:
                             (prop === 'id' ? 
@@ -365,3 +388,15 @@ function codeToId(code){
   return `code_${code.replace('.', '_')}`;
 }
 
+
+function downloadPlot(svg){
+  const svgData = svg.node().outerHTML;
+  const svgBlob = new Blob([svgData], {type:"image/svg+xml;charset=utf-8"});
+  const svgUrl = URL.createObjectURL(svgBlob);
+  const downloadLink = document.createElement("a");
+  downloadLink.href = svgUrl;
+  downloadLink.download = "manhattan_plot.svg";
+  document.body.appendChild(downloadLink);
+  downloadLink.click();
+  document.body.removeChild(downloadLink);
+}
