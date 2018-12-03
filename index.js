@@ -281,8 +281,8 @@ function drawPlot(width, height){
               y: d3.event.y - drag_start.y,
             };
             
-            const x_loc = snapToGrid(code_start.x + drag_change.x, options.grid_snap?10:1);
-            const y_loc = snapToGrid(code_start.y + drag_change.y, options.grid_snap?10:1);
+            const x_loc = snapToGrid(code_start.x + drag_change.x, options.grid_snap?5:1);
+            const y_loc = snapToGrid(code_start.y + drag_change.y, options.grid_snap?5:1);
           
             d.x = x.invert(x_loc);
             d.y = y.invert(y_loc);
