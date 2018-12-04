@@ -36,3 +36,24 @@ data <- readr::read_csv('rs3211783_phewas.csv') %>%
   ) %>% 
   select(-Cases, -Controls, -OR)
 
+
+r2d3::r2d3(
+  data = data, 
+  script = 'index.js',
+  options = list(
+    grid_snap = TRUE, 
+    axis_font_size = 15, 
+    axis_title_size = 22, 
+    point_size = 4, 
+    significance_thresh = 1.6e-5, 
+    x_axis = 'Phecode', 
+    y_max = 5, 
+    download_button = TRUE, 
+    simple_annotation = FALSE,
+    annotation_outline = TRUE
+    # cols_to_ignore = c('P-Value', 'Category', 'OR', 'Cases', 'Controls')
+  ), 
+  container = 'div', 
+  dependencies = 'd3-jetpack'
+)
+

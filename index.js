@@ -25,7 +25,7 @@ if(options.download_button){
 }
   
 // These aren't shown in the tooltip. 
-const ommitted_props = [...options.cols_to_ignore, 'x', 'y', 'log10_p_val', 'color', 'index', 'p_val', 'annotated', 'initialized', (options.simple_annotation ? 'id': '')];
+const ommitted_props = [...(options.cols_to_ignore || []), 'x', 'y', 'log10_p_val', 'color', 'index', 'p_val', 'annotated', 'initialized', (options.simple_annotation ? 'id': '')];
 const margin = ({top: 20, right: 60, bottom: 30, left: 100});
 const tooltip_offset = 5;
 const point_size = options.point_size || 5;
@@ -49,7 +49,7 @@ const pval_formatter = d3.format(".2e");
 const styles = {
   annotation_rect: {
     stroke: 'lightgrey',
-    strokeWidth: '1px',
+    strokeWidth: options.annotation_outline ? '1px' : 0,
     fill: 'white',
     rx: '15',
     cursor: 'move',
