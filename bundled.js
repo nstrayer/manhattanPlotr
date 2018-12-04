@@ -1,3 +1,31 @@
+(function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({1:[function(require,module,exports){
+function codeToId(code){
+  return `code_${code.replace('.', '_')}`;
+}
+
+
+function downloadPlot(svg){
+  const svgData = svg.node().outerHTML;
+  const svgBlob = new Blob([svgData], {type:"image/svg+xml;charset=utf-8"});
+  const svgUrl = URL.createObjectURL(svgBlob);
+  const downloadLink = document.createElement("a");
+  downloadLink.href = svgUrl;
+  downloadLink.download = "manhattan_plot.svg";
+  document.body.appendChild(downloadLink);
+  downloadLink.click();
+  document.body.removeChild(downloadLink);
+}
+
+function snapToGrid(x, grid_step){
+  return Math.round(x / grid_step) * grid_step;
+}
+
+module.exports = {
+  codeToId: codeToId,
+  downloadPlot: downloadPlot,
+  snapToGrid: snapToGrid
+};
+},{}],2:[function(require,module,exports){
 // !preview r2d3 data=data, options = list(grid_snap = TRUE, axis_font_size = 15, axis_title_size = 22, point_size = 4, significance_thresh = 1.6e-5, color_key = category_colors, x_axis = 'Phecode', y_max = 5, download_button = TRUE, simple_annotation = TRUE, cols_to_ignore = c('P-Value', 'Category', 'OR', 'Cases', 'Controls')), container = 'div', dependencies = 'd3-jetpack'
 //
 // r2d3: https://rstudio.github.io/r2d3
@@ -389,3 +417,5 @@ function textFromProps(code){
         return accum + new_line;
     }, '');
 }
+
+},{"./helpers.js":1}]},{},[2]);
