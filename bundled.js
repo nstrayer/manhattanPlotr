@@ -20,25 +20,7 @@ function snapToGrid(x, grid_step){
   return Math.round(x / grid_step) * grid_step;
 }
 
-module.exports = {
-  codeToId: codeToId,
-  downloadPlot: downloadPlot,
-  snapToGrid: snapToGrid
-};
-},{}],2:[function(require,module,exports){
-// !preview r2d3 data=data, options = list(grid_snap = TRUE, axis_font_size = 15, axis_title_size = 22, point_size = 4, significance_thresh = 1.6e-5, color_key = category_colors, x_axis = 'Phecode', y_max = 5, download_button = TRUE, simple_annotation = TRUE, cols_to_ignore = c('P-Value', 'Category', 'OR', 'Cases', 'Controls')), container = 'div', dependencies = 'd3-jetpack'
-//
-// r2d3: https://rstudio.github.io/r2d3
-//
-
-const {
-  codeToId,
-  downloadPlot,
-  snapToGrid
-} = require('./helpers.js');
-
-
-d3.selection.prototype.moveToBack = function() {  
+function moveToBack() {  
   return this.each(function() { 
     var firstChild = this.parentNode.firstChild; 
     if (firstChild) { 
@@ -46,6 +28,23 @@ d3.selection.prototype.moveToBack = function() {
     } 
   });
 };
+
+module.exports = {
+  codeToId: codeToId,
+  downloadPlot: downloadPlot,
+  snapToGrid: snapToGrid,
+  moveToBack: moveToBack,
+};
+},{}],2:[function(require,module,exports){
+const {
+  codeToId,
+  downloadPlot,
+  snapToGrid,
+  moveToBack
+} = require('./helpers.js');
+
+
+d3.selection.prototype.moveToBack = moveToBack;
 
 const svg = div.selectAppend('svg').at({width,height});
 

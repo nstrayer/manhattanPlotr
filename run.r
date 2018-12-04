@@ -37,9 +37,11 @@ data <- readr::read_csv('rs3211783_phewas.csv') %>%
   select(-Cases, -Controls, -OR)
 
 
+# Bundle all the javascript code. 
+system('browserify index.js -o bundled.js')
 r2d3::r2d3(
   data = data, 
-  script = 'index.js',
+  script = 'bundled.js',
   options = list(
     grid_snap = TRUE, 
     axis_font_size = 15, 

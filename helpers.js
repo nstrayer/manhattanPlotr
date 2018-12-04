@@ -19,8 +19,18 @@ function snapToGrid(x, grid_step){
   return Math.round(x / grid_step) * grid_step;
 }
 
+function moveToBack() {  
+  return this.each(function() { 
+    var firstChild = this.parentNode.firstChild; 
+    if (firstChild) { 
+      this.parentNode.insertBefore(this, firstChild); 
+    } 
+  });
+};
+
 module.exports = {
   codeToId: codeToId,
   downloadPlot: downloadPlot,
-  snapToGrid: snapToGrid
+  snapToGrid: snapToGrid,
+  moveToBack: moveToBack,
 };
