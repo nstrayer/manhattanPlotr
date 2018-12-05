@@ -26,11 +26,21 @@ function moveToBack() {
       this.parentNode.insertBefore(this, firstChild); 
     } 
   });
-};
+}
+
+function generateExportArray(tooltips){
+  console.log('running update');
+  alert(`Copy this text
+c(${tooltips.reduce((all, d) => all + `${d.x}, ${d.y}\n`, '')})`);
+}
+
+const pval_formatter = d3.format(".2e");
 
 module.exports = {
   codeToId: codeToId,
   downloadPlot: downloadPlot,
   snapToGrid: snapToGrid,
   moveToBack: moveToBack,
+  pval_formatter: pval_formatter,
+  generateExportArray: generateExportArray,
 };

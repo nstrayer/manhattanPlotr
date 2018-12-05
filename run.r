@@ -38,6 +38,7 @@ data <- readr::read_csv('rs3211783_phewas.csv') %>%
 
 
 # Bundle all the javascript code. 
+# Make sure you have npm installed and also have done npm install -g browserify. 
 system('browserify index.js -o bundled.js')
 r2d3::r2d3(
   data = data, 

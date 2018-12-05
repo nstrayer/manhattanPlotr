@@ -2,7 +2,9 @@ const {
   codeToId,
   downloadPlot,
   snapToGrid,
-  moveToBack
+  moveToBack,
+  pval_formatter,
+  generateExportArray
 } = require('./helpers.js');
 
 
@@ -10,15 +12,6 @@ d3.selection.prototype.moveToBack = moveToBack;
 
 const svg = div.selectAppend('svg').at({width,height});
 
-if(options.download_button){
-  div.selectAppend('button')
-    .text('Download Plot')
-    .st({
-      position: 'fixed',
-      marginTop: '-17px',
-    })
-    .on('click', function(){downloadPlot(svg)});
-}
   
 // These aren't shown in the tooltip. 
 const ommitted_props = [...(options.cols_to_ignore || []), 'x', 'y', 'log10_p_val', 'color', 'index', 'p_val', 'annotated', 'initialized', (options.simple_annotation ? 'id': '')];
@@ -39,8 +32,6 @@ const delete_button_pad = 3;
 let code_start = {};
 let drag_start = {};
 
-
-const pval_formatter = d3.format(".2e");
 
 const styles = {
   annotation_rect: {
@@ -98,6 +89,11 @@ const styles = {
     opacity: 0,
     pointerEvents:'none',
   },
+  export_buttons: {
+    position: 'fixed',
+    bottom: 0,
+    margin: 5,
+  }
 };
 
 // Small popup tooltip
@@ -105,6 +101,19 @@ const popup = div.selectAppend('div.popup').st(styles.code_popup);
 
 //let starting_annotations = [];
 let tooltips = [];
+
+
+if(options.download_button){
+  div.selectAppend('button.download_plot')
+    .text('Download Plot')
+    .st({...styles.export_buttons, left: 0})
+    .on('click', function(){downloadPlot(svg)});
+    
+  div.selectAppend('button.show_annotation_positions')
+    .text('Export Annotation Positions')
+    .st({...styles.export_buttons, left: 150})
+    .on('click', function(){generateExportArray(tooltips)});
+}
 
 const log10_pval_max = d3.max(data, (d,i) => {
   // Add properties to data
@@ -235,14 +244,10 @@ function drawPlot(width, height){
          drawTooltips(tooltips);  
        }
      };
-     
-
   }
   
   function drawTooltips(tooltips){
       
-
-    
     const tooltip_g = svg.selectAppend('g.tooltip_container')
       .selectAll('g.tooltip')
       .data(tooltips, d => d.id);
