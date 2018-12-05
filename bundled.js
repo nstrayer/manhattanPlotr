@@ -63,7 +63,12 @@ const svg = div.selectAppend('svg').at({width,height});
   
 // These aren't shown in the tooltip. 
 const ommitted_props = [...(options.cols_to_ignore || []), 'x', 'y', 'log10_p_val', 'color', 'index', 'p_val', 'annotated', 'initialized', (options.simple_annotation ? 'id': '')];
-const margin = ({top: 20, right: 60, bottom: 30, left: 100});
+const margin = ({
+  top: options.title ? 50: 20, 
+  right: 60, 
+  bottom: 30, 
+  left: 100
+});
 const tooltip_offset = 5;
 const point_size = options.point_size || 5;
 const {significance_thresh} = options;
@@ -143,7 +148,7 @@ const styles = {
     margin: 5,
   },
   title: {
-    y: 25,
+    y: 40,
     textAnchor: 'middle',
     fontSize: 26,
   }
