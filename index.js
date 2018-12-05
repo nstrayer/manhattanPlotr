@@ -93,6 +93,11 @@ const styles = {
     position: 'fixed',
     bottom: 0,
     margin: 5,
+  },
+  title: {
+    y: 25,
+    textAnchor: 'middle',
+    fontSize: 26,
   }
 };
 
@@ -101,7 +106,6 @@ const popup = div.selectAppend('div.popup').st(styles.code_popup);
 
 //let starting_annotations = [];
 let tooltips = [];
-
 
 if(options.download_button){
   div.selectAppend('button.download_plot')
@@ -201,25 +205,16 @@ function drawPlot(width, height){
     .translate([0,y(-Math.log10(significance_thresh))]);
     
   significance_line.selectAppend('line')
-    .at({
-      x2: width - margin.right,
-      ...styles.sig_line,
-    });
+    .at({x2: width - margin.right,...styles.sig_line});
     
   significance_line.selectAppend('text')
-    .at({
-      x: width - margin.right,
-      ...styles.sig_line_text,
-    })
+    .at({x: width - margin.right,...styles.sig_line_text})
     .text(pval_formatter(significance_thresh));
   
   // axis labels
   svg.selectAppend("text.y_axis_label")
     .style('text-anchor', 'left')
-    .at({
-      ...styles.axis_label,
-      y: height/2 - 50,
-    })
+    .at({...styles.axis_label,y: height/2 - 50})
     .html("-Log<tspan baseline-shift='sub' font-size=12>10</tspan>(P)");
   
   svg.selectAppend("text.x_axis_label")
@@ -230,6 +225,14 @@ function drawPlot(width, height){
       y: height,
     })
     .text(options.x_axis);
+    
+  // Has the user provided a title?
+  if(options.title){
+    svg.selectAppend('text.title')
+      .at(styles.title)
+      .attr('x', width/2)
+      .text(options.title);
+  }
    
    drawTooltips(tooltips);
 
