@@ -117,7 +117,9 @@ if(options.download_button){
     .text('Download Plot')
     .st({...styles.export_buttons, left: 0})
     .on('click', function(){downloadPlot(svg)});
-    
+}
+
+if(options.export_annotations){
   div.selectAppend('button.show_annotation_positions')
     .text('Export Annotation Positions')
     .st({...styles.export_buttons, left: 150})

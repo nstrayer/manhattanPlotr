@@ -52,7 +52,7 @@ r2d3::r2d3(
     significance_thresh = 1.6e-5, 
     x_axis = 'Phecode', 
     y_max = 5, 
-    download_button = FALSE, 
+    download_button = TRUE, 
     simple_annotation = FALSE,
     annotation_outline = TRUE
     # cols_to_ignore = c('P-Value', 'Category', 'OR', 'Cases', 'Controls')
