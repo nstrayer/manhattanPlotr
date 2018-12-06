@@ -19,42 +19,25 @@ codes_to_annotate = c(
 )
 
 
-data <- readr::read_csv('rs3211783_phewas.csv') %>% 
+data <- readr::read_csv('rs3211783_phewas.csv') %>%
   select(
-    id = jd_code, 
-    Description = jd_string, 
-    Cases = cases, 
+    id = jd_code,
+    Description = jd_string,
+    Cases = cases,
     Controls = controls,
-    OR = odds_ratio, 
-    p_val = p, 
+    OR = odds_ratio,
+    p_val = p,
     Category = category_string,
-  ) %>% 
-  right_join(category_colors, by = c("Category" = "description")) %>% 
-  mutate(annotated = id %in% codes_to_annotate) %>% 
+  ) %>%
+  right_join(category_colors, by = c("Category" = "description")) %>%
+  # mutate(annotated = id %in% codes_to_annotate) %>%
   select(-Cases, -Controls, -OR)
 
 
-# Bundle all the javascript code. 
-# Make sure you have npm installed and also have done npm install -g browserify. 
-system('browserify index.js -o bundled.js')
-r2d3::r2d3(
-  data = data, 
-  script = 'bundled.js',
-  options = list(
-    title = 'Manhattan plot of PheWAS',
-    grid_snap = TRUE, 
-    axis_font_size = 15, 
-    axis_title_size = 22, 
-    point_size = 4, 
-    significance_thresh = 1.6e-5, 
-    x_axis = 'Phecode', 
-    y_max = 5, 
-    download_button = TRUE, 
-    simple_annotation = FALSE,
-    annotation_outline = TRUE
-    # cols_to_ignore = c('P-Value', 'Category', 'OR', 'Cases', 'Controls')
-  ), 
-  container = 'div', 
-  dependencies = 'd3-jetpack'
-)
 
+data %>%
+  mutate(
+    p_val = p_val + runif(n(), min = 0, max = 0.2),
+    p_val = ifelse(p_val > 1, 1, p_val)
+  ) %>%
+  manhattanPlotr::manhattan()
