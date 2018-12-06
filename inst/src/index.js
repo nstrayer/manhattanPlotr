@@ -1,51 +1,3 @@
-(function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({1:[function(require,module,exports){
-function codeToId(code){
-  return `code_${code.replace('.', '_')}`;
-}
-
-
-function downloadPlot(svg){
-  const svgData = svg.node().outerHTML;
-  const svgBlob = new Blob([svgData], {type:"image/svg+xml;charset=utf-8"});
-  const svgUrl = URL.createObjectURL(svgBlob);
-  const downloadLink = document.createElement("a");
-  downloadLink.href = svgUrl;
-  downloadLink.download = "manhattan_plot.svg";
-  document.body.appendChild(downloadLink);
-  downloadLink.click();
-  document.body.removeChild(downloadLink);
-}
-
-function snapToGrid(x, grid_step){
-  return Math.round(x / grid_step) * grid_step;
-}
-
-function moveToBack() {  
-  return this.each(function() { 
-    var firstChild = this.parentNode.firstChild; 
-    if (firstChild) { 
-      this.parentNode.insertBefore(this, firstChild); 
-    } 
-  });
-}
-
-function generateExportArray(tooltips){
-  console.log('running update');
-  alert(`Copy this text
-c(${tooltips.reduce((all, d) => all + `${d.x}, ${d.y}\n`, '')})`);
-}
-
-const pval_formatter = d3.format(".2e");
-
-module.exports = {
-  codeToId: codeToId,
-  downloadPlot: downloadPlot,
-  snapToGrid: snapToGrid,
-  moveToBack: moveToBack,
-  pval_formatter: pval_formatter,
-  generateExportArray: generateExportArray,
-};
-},{}],2:[function(require,module,exports){
 const {
   codeToId,
   downloadPlot,
@@ -60,18 +12,16 @@ d3.selection.prototype.moveToBack = moveToBack;
 
 const svg = div.selectAppend('svg').at({width,height});
 
-  
-// These aren't shown in the tooltip. 
+// These aren't shown in the tooltip.
 const ommitted_props = [...(options.cols_to_ignore || []), 'x', 'y', 'log10_p_val', 'color', 'index', 'p_val', 'annotated', 'initialized', (options.simple_annotation ? 'id': '')];
 const margin = ({
-  top: options.title ? 50: 20, 
-  right: 60, 
-  bottom: 30, 
+  top: options.title ? 50: 20,
+  right: 60,
+  bottom: 30,
   left: 100
 });
 const tooltip_offset = 5;
 const point_size = options.point_size || 5;
-const {significance_thresh} = options;
 
 // annotation settings
 const id_font_size = options.id_dont_size || 20;
@@ -130,7 +80,7 @@ const styles = {
   delete_button: {
     cx: - delete_button_radius,
     cy: delete_button_radius,
-    r: delete_button_radius, 
+    r: delete_button_radius,
     fill: 'orangered'
   },
   delete_button_x: {
@@ -179,15 +129,15 @@ const log10_pval_max = d3.max(data, (d,i) => {
   d.log10_p_val = -Math.log10(d.p_val);
   d['P-Value'] = pval_formatter(d.p_val);
   d.index = i;
-  
+
   // Check if given code is annotated or not first
   if(d.annotated) tooltips.push(d);
-  
+
   // Return property to max function
   return d.log10_p_val;
 });
 
-const log10_threshold = -Math.log10(significance_thresh);
+const log10_threshold = options.significance_thresh ? -Math.log10(options.significance_thresh): 0;
 const y_max = options.y_max || Math.max(log10_threshold, log10_pval_max);
 
 // Setup x and y scales
@@ -203,7 +153,7 @@ r2d3.onResize(drawPlot);
 function drawPlot(width, height){
   // Resize svg
   svg.at({width,height});
-  
+
   // Update the ranges of our scales
   y.range([height - margin.bottom, margin.top]);
   x.range([margin.left, width - margin.right]);
@@ -216,21 +166,21 @@ function drawPlot(width, height){
     })
     .selectAll('text')
     .st(styles.axis_ticks);
-    
-  // scan through and assign bookkeeping props to the tooltips. 
+
+  // scan through and assign bookkeeping props to the tooltips.
   tooltips.forEach(d => {
     if(!d.initialized){
       d.x = x.invert(x(d.index) + tooltip_offset);
-      d.y = y.invert(y(d.log10_p_val) + tooltip_offset); 
+      d.y = y.invert(y(d.log10_p_val) + tooltip_offset);
       d.initialized = true;
-    } 
+    }
   });
-  
+
   // Setup the actual plot points
   const codes = svg.selectAppend('g.code_bubbles')
     .selectAll('.code_bubble')
     .data(data, d => d.id);
-    
+
   codes.enter()
     .append('circle.code_bubble')
     .merge(codes)
@@ -253,25 +203,27 @@ function drawPlot(width, height){
     .on('mouseout', function(d){
       popup.style('display', 'none');
     });
-    
-    
-  // Draw significance line on y-axis
-  significance_line = svg.selectAppend('g.significance_line')
-    .translate([0,y(-Math.log10(significance_thresh))]);
-    
-  significance_line.selectAppend('line')
-    .at({x2: width - margin.right,...styles.sig_line});
-    
-  significance_line.selectAppend('text')
-    .at({x: width - margin.right,...styles.sig_line_text})
-    .text(pval_formatter(significance_thresh));
-  
+
+  if(options.significance_thresh){
+    // Draw significance line on y-axis
+    significance_line = svg.selectAppend('g.significance_line')
+      .translate([0,y(-Math.log10(options.significance_thresh))]);
+
+    significance_line.selectAppend('line')
+      .at({x2: width - margin.right,...styles.sig_line});
+
+    significance_line.selectAppend('text')
+      .at({x: width - margin.right,...styles.sig_line_text})
+      .text(pval_formatter(options.significance_thresh));
+  }
+
+
   // axis labels
   svg.selectAppend("text.y_axis_label")
     .style('text-anchor', 'left')
     .at({...styles.axis_label,y: height/2 - 50})
     .html("-Log<tspan baseline-shift='sub' font-size=12>10</tspan>(P)");
-  
+
   svg.selectAppend("text.x_axis_label")
     .style('text-anchor', 'middle')
     .at({
@@ -280,7 +232,7 @@ function drawPlot(width, height){
       y: height,
     })
     .text(options.x_axis);
-    
+
   // Has the user provided a title?
   if(options.title){
     svg.selectAppend('text.title')
@@ -288,34 +240,34 @@ function drawPlot(width, height){
       .attr('x', width/2)
       .text(options.title);
   }
-   
+
    drawTooltips(tooltips);
 
    function addTooltip(pin){
      return function(d){
        d.y = y.invert(d3.event.clientY + tooltip_offset);
        d.x = x.invert(d3.event.clientX + tooltip_offset);
-     
-       // check if we already have an active tooltip for the selected code. 
+
+       // check if we already have an active tooltip for the selected code.
        if(!tooltips.find(code => code.id == d.id)){
          tooltips.push(d);
-         drawTooltips(tooltips);  
+         drawTooltips(tooltips);
        }
      };
   }
-  
+
   function drawTooltips(tooltips){
-      
+
     const tooltip_g = svg.selectAppend('g.tooltip_container')
       .selectAll('g.tooltip')
       .data(tooltips, d => d.id);
-    
-    // Logic for determining where to start an annotation tooltip line. 
+
+    // Logic for determining where to start an annotation tooltip line.
     const line_start_atts = {
-      x2: d => x(d.x) + tooltip_containers.select(`rect.${codeToId(d.id)}`).attr('width')/2, 
+      x2: d => x(d.x) + tooltip_containers.select(`rect.${codeToId(d.id)}`).attr('width')/2,
       y2: d => y(d.y) + tooltip_containers.select(`rect.${codeToId(d.id)}`).attr('height')/2
     }
-    
+
     // draw new tooltips and move the old ones to the correct positions
     const tooltip_containers = tooltip_g.enter()
       .append('g.tooltip')
@@ -339,29 +291,29 @@ function drawPlot(width, height){
               x: d3.event.x - drag_start.x,
               y: d3.event.y - drag_start.y,
             };
-            
+
             const x_loc = snapToGrid(code_start.x + drag_change.x, options.grid_snap?5:1);
             const y_loc = snapToGrid(code_start.y + drag_change.y, options.grid_snap?5:1);
-          
+
             d.x = x.invert(x_loc);
             d.y = y.invert(y_loc);
-            
+
             d3.select(this).translate(d => [x_loc,y_loc]);
 
             svg.select(`#${codeToId(d.id)}`).at(line_start_atts);
           })
         );
-    
+
     // remove any deleted tooltips
     tooltip_g.exit()
       .remove();
-    
-    // Draw a basic rectangle box for each tooltip to write on. 
+
+    // Draw a basic rectangle box for each tooltip to write on.
     tooltip_containers.selectAppend('rect')
       .at(background_size)
       .st(styles.annotation_rect)
       .attr('class', d => codeToId(d.id));
-    
+
     // Add contents of annotation as text
     tooltip_containers.selectAppend('text')
       .attr('alignment-baseline', 'hanging')
@@ -376,35 +328,35 @@ function drawPlot(width, height){
             height: text_size.height + annotation_pad,
           });
       });
-      
-    
+
+
     // Add delete button that will appear on mouseover
     const delete_button = tooltip_containers.selectAppend('g.delete_button')
       .translate(function(d){
         const parent_rect = d3.select(this).parent().select('rect');
         return [parent_rect.attr('width') - delete_button_pad, delete_button_pad];
       });
-    
+
     delete_button.selectAppend('circle.delete_button')
       .at(styles.delete_button)
       .style('opacity', 0)
       .on('click',function(current){
           const toDeleteIndex = tooltips.reduce((place, d, i) => d.id === current.id ? i : place, -1);
           tooltips.splice(toDeleteIndex, 1);
-          
+
           svg.select(`#${codeToId(current.id)}`).remove(); // delete line.
           drawTooltips(tooltips);
       });
-    
+
     delete_button.selectAppend('text.delete_button')
       .at(styles.delete_button_x)
       .text('X');
-      
-      
+
+
     const tooltip_lines = svg.selectAppend('g.tooltip_lines')
       .selectAll('.tooltip_line')
       .data(tooltips, d => d.id);
-    
+
     tooltip_lines.enter().append('line.tooltip_line')
       .merge(tooltip_lines)
       .at({
@@ -415,10 +367,10 @@ function drawPlot(width, height){
         ...styles.tooltip_lines,
       })
       .classed('tooltip_line', true);
-    
+
     tooltip_lines.exit().remove();
-    
-    // Move the lines to the back so the points cover them. 
+
+    // Move the lines to the back so the points cover them.
     svg.select('g.tooltip_lines').moveToBack();
   }
 }
@@ -430,10 +382,10 @@ function textFromProps(code){
     .reduce(
       (accum, prop, i) => {
         const value = prop === 'p_val' ?  pval_formatter(code[prop]): code[prop];
-        
+
         const line_body = options.simple_annotation ?
                             value:
-                            (prop === 'id' ? 
+                            (prop === 'id' ?
                               `<tspan font-weight='bold' font-size='${id_font_size}px'>${value}</tspan>`:
                               `<tspan font-weight='bold'>${prop}:</tspan> ${value}`);
 
@@ -441,5 +393,3 @@ function textFromProps(code){
         return accum + new_line;
     }, '');
 }
-
-},{"./helpers.js":1}]},{},[2]);
