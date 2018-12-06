@@ -3,7 +3,6 @@ library(tidyverse)
 
 category_colors <- readr::read_csv('category_colors.csv')
 
-
 codes_to_annotate = c(
   '289',
   '289.8',
@@ -31,9 +30,7 @@ data <- readr::read_csv('rs3211783_phewas.csv') %>%
     Category = category_string,
   ) %>% 
   right_join(category_colors, by = c("Category" = "description")) %>% 
-  mutate(
-    annotated = id %in% codes_to_annotate
-  ) %>% 
+  mutate(annotated = id %in% codes_to_annotate) %>% 
   select(-Cases, -Controls, -OR)
 
 
