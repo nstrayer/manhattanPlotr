@@ -271,7 +271,7 @@ function drawPlot(width, height){
   svg.selectAppend("text.y_axis_label")
     .style('text-anchor', 'left')
     .at({...styles.axis_label,y: height/2 - 50})
-    .html("-Log<tspan baseline-shift='sub' font-size=12>10</tspan>(P)");
+    .html(`-Log<tspan baseline-shift='sub' font-size='${styles.axis_label.fontSize*0.7}px'>10</tspan>(P)`);
 
   svg.selectAppend("text.x_axis_label")
     .style('text-anchor', 'middle')
