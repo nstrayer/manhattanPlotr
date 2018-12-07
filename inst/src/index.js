@@ -246,11 +246,12 @@ function drawPlot(width, height){
 
    function addTooltip(pin){
      return function(d){
-       d.y = y.invert(d3.event.clientY + tooltip_offset);
-       d.x = x.invert(d3.event.clientX + tooltip_offset);
-
        // check if we already have an active tooltip for the selected code.
        if(!tooltips.find(code => code.id == d.id)){
+          d.x = x.invert(x(d.index) + tooltip_offset);
+          d.y = y.invert(y(d.log10_p_val) + tooltip_offset);
+          d.initialized = true;
+
          tooltips.push(d);
          drawTooltips(tooltips);
        }
