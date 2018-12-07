@@ -40,4 +40,4 @@ data %>%
     p_val = p_val + runif(n(), min = 0, max = 0.2),
     p_val = ifelse(p_val > 1, 1, p_val)
   ) %>%
-  manhattanPlotr::manhattan()
+  manhattan(annotation_font_size = 10)

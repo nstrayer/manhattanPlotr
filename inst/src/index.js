@@ -24,9 +24,9 @@ const tooltip_offset = 5;
 const point_size = options.point_size || 5;
 
 // annotation settings
-const id_font_size = options.id_dont_size || 20;
+const id_font_size = options.annotation_font_size*1.3 || 20;
 const annotation_pad = 10;
-const line_height = 20;
+const line_height = id_font_size;
 const background_size = {width: 250, height: 150};
 const delete_button_radius = 13;
 const delete_button_pad = 3;
@@ -46,7 +46,7 @@ const styles = {
   },
   annotation_text: {
     pointerEvents: 'none',
-    fontSize: 20,
+    fontSize: options.annotation_font_size || 20,
   },
   code_popup: {
     background:'rgba(255,255,255,0.7)',
@@ -103,6 +103,7 @@ const styles = {
     fontSize: 26,
   }
 };
+
 
 // Small popup tooltip
 const popup = div.selectAppend('div.popup').st(styles.code_popup);
@@ -389,7 +390,7 @@ function textFromProps(code){
                               `<tspan font-weight='bold' font-size='${id_font_size}px'>${value}</tspan>`:
                               `<tspan font-weight='bold'>${prop}:</tspan> ${value}`);
 
-        const new_line = `<tspan x=${annotation_pad} dy=${line_height}>${line_body}</tspan>`;
+        const new_line = `<tspan x=${annotation_pad} dy=${line_height} font-size='${styles.annotation_text.fontSize}px'>${line_body}</tspan>`;
         return accum + new_line;
     }, '');
 }

@@ -5,10 +5,11 @@
 \title{Manhattan Plot}
 \usage{
 manhattan(data, title = NULL, grid_snap = TRUE, axes_font_size = 15,
-  axes_title_size = 22, point_size = 4, significance_thresh = NULL,
-  x_axis_title = "", y_max = NULL, download_button = TRUE,
-  simple_annotation = FALSE, annotation_outline = TRUE,
-  cols_to_ignore = c("P-Value", "Category", "OR", "Cases", "Controls"))
+  axes_title_size = 22, annotation_font_size = 20, point_size = 4,
+  significance_thresh = NULL, x_axis_title = "", y_max = NULL,
+  download_button = TRUE, simple_annotation = FALSE,
+  annotation_outline = TRUE, cols_to_ignore = c("P-Value", "Category",
+  "OR", "Cases", "Controls"))
 }
 \arguments{
 \item{data}{Dataframe containing the data to be plotted. Needs three columns \code{id} which corresponds to the unique snp(GWAS) or phecode(PheWAS), \code{p_val} which is the p-value from your association study, and \code{color} which provides the color for the points.}
@@ -20,6 +21,8 @@ manhattan(data, title = NULL, grid_snap = TRUE, axes_font_size = 15,
 \item{axes_font_size}{Size of the y axis text in HTML px size.}
 
 \item{axes_title_size}{Size of the x and y axis titles in HTML px size.}
+
+\item{annotation_font_size}{Size of the main text for annotation. If not using \code{simple_annotation=TRUE)} the ID text will be 30% larger.}
 
 \item{point_size}{Size of the points drawn for each snp or code. Default is 4.}
 

@@ -17,6 +17,7 @@
 #' @param grid_snap When dragging annotations should they snap to a grid? This helps with lining things up neatly but looses more fine-grained control over annotation position.
 #' @param axes_font_size Size of the y axis text in HTML px size.
 #' @param axes_title_size Size of the x and y axis titles in HTML px size.
+#' @param annotation_font_size Size of the main text for annotation. If not using \code{simple_annotation=TRUE)} the ID text will be 30% larger.
 #' @param point_size Size of the points drawn for each snp or code. Default is 4.
 #' @param significance_thresh Position in terms of p-value for a threshold line. If left out no line will be drawn.
 #' @param x_axis_title Title of the x-axis. Defaults to nothing.
@@ -38,6 +39,7 @@ manhattan <- function(
   grid_snap = TRUE,
   axes_font_size = 15,
   axes_title_size = 22,
+  annotation_font_size = 20,
   point_size = 4,
   significance_thresh = NULL, #1.6e-5,
   x_axis_title = '',
@@ -63,7 +65,8 @@ manhattan <- function(
       download_button = download_button,
       simple_annotation = simple_annotation,
       annotation_outline = annotation_outline,
-      cols_to_ignore = cols_to_ignore
+      cols_to_ignore = cols_to_ignore,
+      annotation_font_size = annotation_font_size
     ),
     container = 'div',
     dependencies = 'd3-jetpack'
