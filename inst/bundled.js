@@ -20,12 +20,12 @@ function snapToGrid(x, grid_step){
   return Math.round(x / grid_step) * grid_step;
 }
 
-function moveToBack() {
-  return this.each(function() {
-    var firstChild = this.parentNode.firstChild;
-    if (firstChild) {
-      this.parentNode.insertBefore(this, firstChild);
-    }
+function moveToBack() {  
+  return this.each(function() { 
+    var firstChild = this.parentNode.firstChild; 
+    if (firstChild) { 
+      this.parentNode.insertBefore(this, firstChild); 
+    } 
   });
 }
 
@@ -368,9 +368,8 @@ function drawPlot(width, height){
     // Add contents of annotation as text
     const text_containers = tooltip_containers.selectAppend('g.contents_text');
 
-
     text_containers.selectAll('text')
-      .data(textFromPropsNew)
+      .data(textFromProps)
       .enter().append('text')
       .attr('y', d => d.y_pos)
       .html(d => d.body);
@@ -384,14 +383,6 @@ function drawPlot(width, height){
             height: text_size.height + annotation_pad,
           });
       });
-      //.attr('alignment-baseline', 'hanging')
-      //.st(styles.annotation_text)
-      //.html(d => {
-      //  const new_res = textFromPropsNew(d);
-      //  debugger;
-      //  return textFromProps(d)
-      //})
-
 
 
     // Add delete button that will appear on mouseover
@@ -439,7 +430,7 @@ function drawPlot(width, height){
   }
 }
 
-function textFromPropsNew(code){
+function textFromProps(code){
   const desired_keys = Object.keys(code).filter(prop => !ommitted_props.includes(prop));
 
   const text_lines = desired_keys.map((prop, i) => {
@@ -460,22 +451,5 @@ function textFromPropsNew(code){
 }
 
 
-function textFromProps(code){
-  return Object.keys(code)
-    .filter(prop => !ommitted_props.includes(prop))
-    .reduce(
-      (accum, prop, i) => {
-        const value = prop === 'p_val' ?  pval_formatter(code[prop]): code[prop];
-
-        const line_body = options.simple_annotation ?
-                            value:
-                            (prop === 'id' ?
-                              `<tspan font-weight='bold' font-size='${id_font_size}px'>${value}</tspan>`:
-                              `<tspan font-weight='bold'>${prop}:</tspan> ${value}`);
-
-        const new_line = `<tspan x=${annotation_pad} dy=${line_height} font-size='${styles.annotation_text.fontSize}px'>${line_body}</tspan>`;
-        return accum + new_line;
-    }, '');
-}
 
 },{"./helpers.js":1}]},{},[2]);

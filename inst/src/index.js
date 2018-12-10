@@ -318,17 +318,17 @@ function drawPlot(width, height){
       .attr('class', d => codeToId(d.id));
 
     // Add contents of annotation as text
-    tooltip_containers.selectAppend('text')
-      .attr('alignment-baseline', 'hanging')
-      .st(styles.annotation_text)
-      .html(d => {
-        const new_res = textFromPropsNew(d);
-        debugger;
-        return textFromProps(d)
-      })
+    const text_containers = tooltip_containers.selectAppend('g.contents_text');
+
+    text_containers.selectAll('text')
+      .data(textFromProps)
+      .enter().append('text')
+      .attr('y', d => d.y_pos)
+      .html(d => d.body);
+
+    text_containers
       .each(function(text_block) {
          const text_size = this.getBBox();
-
          d3.select(this).parent().select('rect')
           .at({
             width: text_size.width + annotation_pad*2,
@@ -382,10 +382,10 @@ function drawPlot(width, height){
   }
 }
 
-function textFromPropsNew(code){
+function textFromProps(code){
   const desired_keys = Object.keys(code).filter(prop => !ommitted_props.includes(prop));
 
-  const text_lines = desired_keys.map((d, i) => {
+  const text_lines = desired_keys.map((prop, i) => {
     const value = prop === 'p_val' ?  pval_formatter(code[prop]): code[prop];
 
     const line_body = prop === 'id' ?
@@ -393,7 +393,7 @@ function textFromPropsNew(code){
       `<tspan> <tspan font-weight='bold'>${options.simple_annotation ? '': prop}:</tspan> ${value} </tspan>`;
 
     return {
-      y_pos: i*line_height,
+      y_pos: (i+1)*line_height,
       body: line_body
     };
   })
@@ -403,20 +403,3 @@ function textFromPropsNew(code){
 }
 
 
-function textFromProps(code){
-  return Object.keys(code)
-    .filter(prop => !ommitted_props.includes(prop))
-    .reduce(
-      (accum, prop, i) => {
-        const value = prop === 'p_val' ?  pval_formatter(code[prop]): code[prop];
-
-        const line_body = options.simple_annotation ?
-                            value:
-                            (prop === 'id' ?
-                              `<tspan font-weight='bold' font-size='${id_font_size}px'>${value}</tspan>`:
-                              `<tspan font-weight='bold'>${prop}:</tspan> ${value}`);
-
-        const new_line = `<tspan x=${annotation_pad} dy=${line_height} font-size='${styles.annotation_text.fontSize}px'>${line_body}</tspan>`;
-        return accum + new_line;
-    }, '');
-}
