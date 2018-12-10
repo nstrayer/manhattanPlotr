@@ -89,7 +89,7 @@ const styles = {
     stroke: 'lightgrey',
     strokeWidth: options.annotation_outline ? '1px' : 0,
     fill: 'white',
-    //rx: '15px',
+    rx: '15px',
     cursor: 'move',
   },
   annotation_text: {
@@ -239,7 +239,7 @@ function drawPlot(width, height){
       fill: d => d.color,
       r: point_size,
     })
-    .on('click', addTooltip(false))
+    .on('click', addTooltip)
     .on('mouseover', function(d){
       popup
        .st({
@@ -292,19 +292,17 @@ function drawPlot(width, height){
 
    drawTooltips(tooltips);
 
-   function addTooltip(pin){
-     return function(d){
-       // check if we already have an active tooltip for the selected code.
-       if(!tooltips.find(code => code.id == d.id)){
-          d.x = x.invert(x(d.index) + tooltip_offset);
-          d.y = y.invert(y(d.log10_p_val) + tooltip_offset);
-          d.initialized = true;
+   function addTooltip(d){
+     // check if we already have an active tooltip for the selected code.
+     if(!tooltips.find(code => code.id == d.id)){
+        d.x = x.invert(x(d.index) + tooltip_offset);
+        d.y = y.invert(y(d.log10_p_val) + tooltip_offset);
+        d.initialized = true;
 
-         tooltips.push(d);
-         drawTooltips(tooltips);
-       }
-     };
-  }
+       tooltips.push(d);
+       drawTooltips(tooltips);
+     }
+   };
 
   function drawTooltips(tooltips){
 
@@ -371,7 +369,10 @@ function drawPlot(width, height){
     text_containers.selectAll('text')
       .data(textFromProps)
       .enter().append('text')
-      .attr('y', d => d.y_pos)
+      .at({
+        y : d => d.y_pos,
+        x : 10
+      })
       .html(d => d.body);
 
     text_containers
@@ -407,7 +408,6 @@ function drawPlot(width, height){
       .at(styles.delete_button_x)
       .text('X');
 
-
     const tooltip_lines = svg.selectAppend('g.tooltip_lines')
       .selectAll('.tooltip_line')
       .data(tooltips, d => d.id);
@@ -438,7 +438,7 @@ function textFromProps(code){
 
     const line_body = prop === 'id' ?
       `<tspan font-weight='bold' font-size='${id_font_size}px'>${value}</tspan>` :
-      `<tspan> <tspan font-weight='bold'>${options.simple_annotation ? '': prop}:</tspan> ${value} </tspan>`;
+      `<tspan> <tspan font-weight='bold'>${options.simple_annotation + ':' ? '': prop}</tspan> ${value} </tspan>`;
 
     return {
       y_pos: (i+1)*line_height,

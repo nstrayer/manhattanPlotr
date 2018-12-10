@@ -38,8 +38,8 @@ manhattan <- function(
   title = NULL,
   grid_snap = TRUE,
   axes_font_size = 15,
-  axes_title_size = 22,
-  annotation_font_size = 20,
+  axes_title_size = 18,
+  annotation_font_size = 14,
   point_size = 4,
   significance_thresh = NULL, #1.6e-5,
   x_axis_title = '',
@@ -51,8 +51,8 @@ manhattan <- function(
 ){
   r2d3::r2d3(
     data = data,
-    script = system.file("bundled.js", package = "manhattanPlotr"),
-    # script = 'inst/bundled.js', #uncomment for developing locally.
+    # script = system.file("bundled.js", package = "manhattanPlotr"),
+    script = 'inst/bundled.js', #uncomment for developing locally.
     options = list(
       title = title,
       grid_snap = grid_snap,
