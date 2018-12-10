@@ -89,7 +89,7 @@ const styles = {
     stroke: 'lightgrey',
     strokeWidth: options.annotation_outline ? '1px' : 0,
     fill: 'white',
-    rx: '15',
+    rx: '15px',
     cursor: 'move',
   },
   annotation_text: {
@@ -239,7 +239,7 @@ function drawPlot(width, height){
       fill: d => d.color,
       r: point_size,
     })
-    .on('click', addTooltip(false))
+    .on('click', addTooltip)
     .on('mouseover', function(d){
       popup
        .st({
@@ -292,19 +292,17 @@ function drawPlot(width, height){
 
    drawTooltips(tooltips);
 
-   function addTooltip(pin){
-     return function(d){
-       // check if we already have an active tooltip for the selected code.
-       if(!tooltips.find(code => code.id == d.id)){
-          d.x = x.invert(x(d.index) + tooltip_offset);
-          d.y = y.invert(y(d.log10_p_val) + tooltip_offset);
-          d.initialized = true;
+   function addTooltip(d){
+     // check if we already have an active tooltip for the selected code.
+     if(!tooltips.find(code => code.id == d.id)){
+        d.x = x.invert(x(d.index) + tooltip_offset);
+        d.y = y.invert(y(d.log10_p_val) + tooltip_offset);
+        d.initialized = true;
 
-         tooltips.push(d);
-         drawTooltips(tooltips);
-       }
-     };
-  }
+       tooltips.push(d);
+       drawTooltips(tooltips);
+     }
+   };
 
   function drawTooltips(tooltips){
 
@@ -362,16 +360,24 @@ function drawPlot(width, height){
     tooltip_containers.selectAppend('rect')
       .at(background_size)
       .st(styles.annotation_rect)
+      .attr('rx', styles.annotation_rect.rx)
       .attr('class', d => codeToId(d.id));
 
     // Add contents of annotation as text
-    tooltip_containers.selectAppend('text')
-      .attr('alignment-baseline', 'hanging')
-      .st(styles.annotation_text)
-      .html(textFromProps)
+    const text_containers = tooltip_containers.selectAppend('g.contents_text');
+
+    text_containers.selectAll('text')
+      .data(textFromProps)
+      .enter().append('text')
+      .at({
+        y : d => d.y_pos,
+        x : 10
+      })
+      .html(d => d.body);
+
+    text_containers
       .each(function(text_block) {
          const text_size = this.getBBox();
-
          d3.select(this).parent().select('rect')
           .at({
             width: text_size.width + annotation_pad*2,
@@ -402,7 +408,6 @@ function drawPlot(width, height){
       .at(styles.delete_button_x)
       .text('X');
 
-
     const tooltip_lines = svg.selectAppend('g.tooltip_lines')
       .selectAll('.tooltip_line')
       .data(tooltips, d => d.id);
@@ -425,23 +430,26 @@ function drawPlot(width, height){
   }
 }
 
-
 function textFromProps(code){
-  return Object.keys(code)
-    .filter(prop => !ommitted_props.includes(prop))
-    .reduce(
-      (accum, prop, i) => {
-        const value = prop === 'p_val' ?  pval_formatter(code[prop]): code[prop];
+  const desired_keys = Object.keys(code).filter(prop => !ommitted_props.includes(prop));
 
-        const line_body = options.simple_annotation ?
-                            value:
-                            (prop === 'id' ?
-                              `<tspan font-weight='bold' font-size='${id_font_size}px'>${value}</tspan>`:
-                              `<tspan font-weight='bold'>${prop}:</tspan> ${value}`);
+  const text_lines = desired_keys.map((prop, i) => {
+    const value = prop === 'p_val' ?  pval_formatter(code[prop]): code[prop];
 
-        const new_line = `<tspan x=${annotation_pad} dy=${line_height} font-size='${styles.annotation_text.fontSize}px'>${line_body}</tspan>`;
-        return accum + new_line;
-    }, '');
+    const line_body = prop === 'id' ?
+      `<tspan font-weight='bold' font-size='${id_font_size}px'>${value}</tspan>` :
+      `<tspan> <tspan font-weight='bold'>${options.simple_annotation + ':' ? '': prop}</tspan> ${value} </tspan>`;
+
+    return {
+      y_pos: (i+1)*line_height,
+      body: line_body
+    };
+  })
+
+  return text_lines;
+
 }
+
+
 
 },{"./helpers.js":1}]},{},[2]);
