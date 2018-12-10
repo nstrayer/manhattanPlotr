@@ -20,12 +20,12 @@ function snapToGrid(x, grid_step){
   return Math.round(x / grid_step) * grid_step;
 }
 
-function moveToBack() {  
-  return this.each(function() { 
-    var firstChild = this.parentNode.firstChild; 
-    if (firstChild) { 
-      this.parentNode.insertBefore(this, firstChild); 
-    } 
+function moveToBack() {
+  return this.each(function() {
+    var firstChild = this.parentNode.firstChild;
+    if (firstChild) {
+      this.parentNode.insertBefore(this, firstChild);
+    }
   });
 }
 
@@ -89,7 +89,7 @@ const styles = {
     stroke: 'lightgrey',
     strokeWidth: options.annotation_outline ? '1px' : 0,
     fill: 'white',
-    rx: '15',
+    //rx: '15px',
     cursor: 'move',
   },
   annotation_text: {
@@ -362,22 +362,36 @@ function drawPlot(width, height){
     tooltip_containers.selectAppend('rect')
       .at(background_size)
       .st(styles.annotation_rect)
+      .attr('rx', styles.annotation_rect.rx)
       .attr('class', d => codeToId(d.id));
 
     // Add contents of annotation as text
-    tooltip_containers.selectAppend('text')
-      .attr('alignment-baseline', 'hanging')
-      .st(styles.annotation_text)
-      .html(textFromProps)
+    const text_containers = tooltip_containers.selectAppend('g.contents_text');
+
+
+    text_containers.selectAll('text')
+      .data(textFromPropsNew)
+      .enter().append('text')
+      .attr('y', d => d.y_pos)
+      .html(d => d.body);
+
+    text_containers
       .each(function(text_block) {
          const text_size = this.getBBox();
-
          d3.select(this).parent().select('rect')
           .at({
             width: text_size.width + annotation_pad*2,
             height: text_size.height + annotation_pad,
           });
       });
+      //.attr('alignment-baseline', 'hanging')
+      //.st(styles.annotation_text)
+      //.html(d => {
+      //  const new_res = textFromPropsNew(d);
+      //  debugger;
+      //  return textFromProps(d)
+      //})
+
 
 
     // Add delete button that will appear on mouseover
@@ -423,6 +437,26 @@ function drawPlot(width, height){
     // Move the lines to the back so the points cover them.
     svg.select('g.tooltip_lines').moveToBack();
   }
+}
+
+function textFromPropsNew(code){
+  const desired_keys = Object.keys(code).filter(prop => !ommitted_props.includes(prop));
+
+  const text_lines = desired_keys.map((prop, i) => {
+    const value = prop === 'p_val' ?  pval_formatter(code[prop]): code[prop];
+
+    const line_body = prop === 'id' ?
+      `<tspan font-weight='bold' font-size='${id_font_size}px'>${value}</tspan>` :
+      `<tspan> <tspan font-weight='bold'>${options.simple_annotation ? '': prop}:</tspan> ${value} </tspan>`;
+
+    return {
+      y_pos: (i+1)*line_height,
+      body: line_body
+    };
+  })
+
+  return text_lines;
+
 }
 
 
