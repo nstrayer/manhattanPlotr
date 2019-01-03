@@ -6,8 +6,9 @@
 #'
 #' @return \code{df} with an added \code{color} column.
 #' @export
-#' df %>% buildColorPalette(Category)
+#' 
 #' @examples
+#' df %>% buildColorPalette(Category)
 buildColorPalette <- function(df, indexCol){
   
   indexCol_quo <- rlang::enquo(indexCol)
@@ -30,19 +31,4 @@ buildColorPalette <- function(df, indexCol){
   
   right_join(df, color_key, by = rlang::quo_name(indexCol_quo))
 }
-
-df %>% buildColorPalette(Category)
-
-indexCol <- 'Category'
-
-df <- readr::read_csv(here('demos/phewas_data/rs3211783.csv')) %>%
-  select(
-    id = jd_code,
-    Description = jd_string,
-    Cases = cases,
-    Controls = controls,
-    OR = odds_ratio,
-    p_val = p,
-    Category = category_string,
-  ) 
 

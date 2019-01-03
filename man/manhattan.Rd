@@ -5,7 +5,7 @@
 \title{Manhattan Plot}
 \usage{
 manhattan(data, title = NULL, grid_snap = TRUE, axes_font_size = 15,
-  axes_title_size = 22, annotation_font_size = 20, point_size = 4,
+  axes_title_size = 18, annotation_font_size = 14, point_size = 4,
   significance_thresh = NULL, x_axis_title = "", y_max = NULL,
   download_button = TRUE, simple_annotation = FALSE,
   annotation_outline = TRUE, cols_to_ignore = c("P-Value", "Category",
