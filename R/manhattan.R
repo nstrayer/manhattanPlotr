@@ -51,8 +51,8 @@ manhattan <- function(
 ){
   r2d3::r2d3(
     data = data,
-    # script = system.file("bundled.js", package = "manhattanPlotr"),
-    script = 'inst/bundled.js', #uncomment for developing locally.
+    script = system.file("bundled.js", package = "manhattanPlotr"),
+    # script = 'inst/bundled.js', #uncomment for developing locally.
     options = list(
       title = title,
       grid_snap = grid_snap,
