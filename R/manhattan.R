@@ -17,7 +17,7 @@
 #' @param grid_snap When dragging annotations should they snap to a grid? This helps with lining things up neatly but looses more fine-grained control over annotation position.
 #' @param axes_font_size Size of the y axis text in HTML px size.
 #' @param axes_title_size Size of the x and y axis titles in HTML px size.
-#' @param annotation_font_size Size of the main text for annotation. If not using \code{simple_annotation=TRUE)} the ID text will be 30% larger.
+#' @param annotation_font_size Size of the main text for annotation. If not using \code{simple_annotation=TRUE} the ID text will be 30% larger.
 #' @param point_size Size of the points drawn for each snp or code. Default is 4.
 #' @param significance_thresh Position in terms of p-value for a threshold line. If left out no line will be drawn.
 #' @param x_axis_title Title of the x-axis. Defaults to nothing.
@@ -26,6 +26,7 @@
 #' @param simple_annotation By default the annotations will show the column name in bold then the column value. By enabling this argument the column name is removed and just the column values are printed.
 #' @param annotation_outline Do you want an outline drawn around the annotation boxes? If set to no the boxes still have a white background but no outline.
 #' @param cols_to_ignore The names of any columns in the dataset that you don't want included in the annotations. You could alternatively just remove these columns before passing to the function. To hide p-value include \code{'P-Value'} in this.
+#' @param top_padding How many pixels should be added to the top of the chart for padding. This can be used to get more space for annotations. Defaults to 0.
 #'
 #' @return An html interactive manhattan plot.
 #' @export
@@ -47,7 +48,8 @@ manhattan <- function(
   download_button = TRUE,
   simple_annotation = FALSE,
   annotation_outline = TRUE,
-  cols_to_ignore = c('P-Value', 'Category', 'OR', 'Cases', 'Controls')
+  cols_to_ignore = c('P-Value', 'Category', 'OR', 'Cases', 'Controls'),
+  top_padding = 0
 ){
   r2d3::r2d3(
     data = data,
@@ -66,7 +68,8 @@ manhattan <- function(
       simple_annotation = simple_annotation,
       annotation_outline = annotation_outline,
       cols_to_ignore = cols_to_ignore,
-      annotation_font_size = annotation_font_size
+      annotation_font_size = annotation_font_size,
+      top_padding = top_padding
     ),
     container = 'div',
     dependencies = 'd3-jetpack'

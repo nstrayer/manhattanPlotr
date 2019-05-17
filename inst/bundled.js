@@ -63,7 +63,7 @@ const svg = div.selectAppend('svg').at({width,height});
 // These aren't shown in the tooltip.
 const ommitted_props = [...(options.cols_to_ignore || []), 'x', 'y', 'log10_p_val', 'color', 'index', 'p_val', 'annotated', 'initialized', (options.simple_annotation ? 'id': '')];
 const margin = ({
-  top: options.title ? 50: 20,
+  top: (options.top_padding || 0) + (options.title ? 50: 20),
   right: 60,
   bottom: 30,
   left: 100
@@ -98,7 +98,7 @@ const styles = {
   },
   code_popup: {
     background:'rgba(255,255,255,0.7)',
-    position:'fixed',
+    position:'absolute',
     textAlign: 'center',
     fontSize: 18,
   },
@@ -141,7 +141,7 @@ const styles = {
     pointerEvents:'none',
   },
   export_buttons: {
-    position: 'fixed',
+    position: 'absolute',
     bottom: 0,
     margin: 5,
   },
@@ -152,6 +152,8 @@ const styles = {
   }
 };
 
+// Needed for the positioning of buttons etc. 
+div.style('position', 'relative');
 
 // Small popup tooltip
 const popup = div.selectAppend('div.popup').st(styles.code_popup);
@@ -438,7 +440,7 @@ function textFromProps(code){
 
     const line_body = prop === 'id' ?
       `<tspan font-weight='bold' font-size='${id_font_size}px'>${value}</tspan>` :
-      `<tspan> <tspan font-weight='bold'>${options.simple_annotation + ':' ? '': prop}</tspan> ${value} </tspan>`;
+      `<tspan font-size='${options.annotation_font_size}px'> <tspan font-weight='bold'>${options.simple_annotation + ':' ? '' : prop} </tspan> ${value} </tspan>`;
 
     return {
       y_pos: (i+1)*line_height,
